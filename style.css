@@ -1,0 +1,376 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    background: rgb(245, 244, 239);
+    min-height: 100vh;
+    padding: 20px;
+    color: black;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: rgb(245, 244, 239);
+    overflow: hidden;
+}
+
+header {
+    background: rgb(245, 244, 239);
+    color: black;
+    padding: 20px 0;
+    text-align: left;
+}
+
+header h1 {
+    font-size: 1.5rem;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: black;
+}
+
+.subtitle {
+    font-size: 0.9rem;
+    color: black;
+}
+
+.tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.tab-btn {
+    padding: 15px 30px;
+    border: none;
+    background: transparent;
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: black;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    transition: opacity 0.3s;
+}
+
+.tab-btn:hover {
+    opacity: 0.7;
+}
+
+.tab-btn.active {
+    border-bottom-color: black;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.main-content {
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: black;
+    font-size: 0.9rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 8px 0;
+    border: none;
+    border-bottom: 2px solid black;
+    background: transparent;
+    font-size: 0.9rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-bottom-color: black;
+}
+
+.left-section {
+    position: sticky;
+    top: 20px;
+}
+
+.add-item-form {
+    margin-top: 25px;
+    padding-top: 25px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.add-item-form h2 {
+    font-size: 1.25rem;
+    color: black;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.right-section {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.items-section {
+    margin-top: 0;
+}
+
+.items-section h2 {
+    font-size: 1.25rem;
+    color: black;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-header h2 {
+    font-size: 1.25rem;
+    color: black;
+    font-weight: 600;
+}
+
+.btn {
+    padding: 0;
+    border: none;
+    background: transparent;
+    font-size: 0.9rem;
+    font-weight: 400;
+    cursor: pointer;
+    text-decoration: underline;
+    color: black;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    transition: opacity 0.3s;
+}
+
+.btn-primary {
+    text-decoration: underline;
+}
+
+.btn-primary:hover {
+    opacity: 0.7;
+}
+
+.btn-danger {
+    text-decoration: underline;
+    font-size: 0.85rem;
+}
+
+.btn-danger:hover {
+    opacity: 0.7;
+}
+
+.item-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    margin-bottom: 10px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.item-display:last-child {
+    border-bottom: none;
+}
+
+.item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+}
+
+.item-price-display {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: black;
+}
+
+.item-person-display {
+    font-size: 0.85rem;
+    color: black;
+    opacity: 0.7;
+}
+
+.item-person-display.no-person {
+    font-style: italic;
+    opacity: 0.5;
+}
+
+.item-final-price {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: black;
+    margin-right: 10px;
+}
+
+.results-section {
+    margin-top: 0;
+    padding-top: 25px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.results-section h2 {
+    font-size: 1.25rem;
+    color: black;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.placeholder {
+    color: black;
+    opacity: 0.5;
+    text-align: left;
+    padding: 10px 0;
+}
+
+.person-result {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    background: transparent;
+    margin-bottom: 5px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.person-result:last-child {
+    margin-bottom: 0;
+    border-bottom: none;
+}
+
+.person-name {
+    font-weight: 400;
+    font-size: 0.9rem;
+    color: black;
+}
+
+.person-amount {
+    font-size: 1rem;
+    font-weight: 600;
+    color: black;
+}
+
+.total-summary {
+    margin-top: 20px;
+    padding: 15px 0;
+    background: transparent;
+    text-align: left;
+    border-top: 2px solid black;
+    padding-top: 15px;
+}
+
+.total-summary .label {
+    font-size: 0.85rem;
+    opacity: 0.7;
+    margin-bottom: 5px;
+    color: black;
+}
+
+.total-summary .amount {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: black;
+}
+
+.saved-bills-container {
+    padding: 20px 0;
+}
+
+.saved-bill-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: opacity 0.3s;
+}
+
+.saved-bill-item:hover {
+    opacity: 0.7;
+}
+
+.saved-bill-item:last-child {
+    border-bottom: none;
+}
+
+.saved-bill-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+}
+
+.saved-bill-name {
+    font-size: 0.9rem;
+    color: black;
+}
+
+.saved-bill-meta {
+    font-size: 0.85rem;
+    color: black;
+    opacity: 0.7;
+}
+
+.saved-bill-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.saved-bill-actions .btn {
+    font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+
+    .left-section {
+        position: static;
+    }
+
+    .item-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    header h1 {
+        font-size: 1.25rem;
+    }
+
+    body {
+        padding: 10px;
+    }
+}
+

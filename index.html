@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dinner Bill Splitter</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Bill Splitter</h1>
+            <p class="subtitle">Calculate what everyone owes when you pay</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="current">Current Bill</button>
+            <button class="tab-btn" data-tab="saved">Saved Bills</button>
+        </div>
+
+        <div class="tab-content active" id="current-bill">
+            <div class="main-content">
+            <div class="left-section">
+                <div class="form-group">
+                    <label for="bill-name">Bill Name</label>
+                    <input type="text" id="bill-name" placeholder="Enter bill name">
+                </div>
+                <div class="form-group">
+                    <label for="total-paid">Total Amount Paid (after tax & tip)</label>
+                    <input type="number" id="total-paid" step="0.01" min="0" placeholder="0.00">
+                </div>
+                <div class="add-item-form">
+                    <h2>Add Receipt Item</h2>
+                    <div class="form-group">
+                        <label for="item-price">Item Price</label>
+                        <input type="number" id="item-price" step="0.01" min="0" placeholder="0.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="item-person">Person</label>
+                        <input type="text" id="item-person" placeholder="Enter name" required>
+                    </div>
+                    <div class="form-group">
+                        <button type="button" id="add-item-btn" class="btn btn-primary">+ Add Item</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <button type="button" id="save-bill-btn" class="btn btn-primary">Save Bill</button>
+                </div>
+            </div>
+
+            <div class="right-section">
+                <div class="items-section">
+                    <h2>Receipt Items</h2>
+                    <div id="items-container">
+                        <!-- Items will be added here dynamically -->
+                    </div>
+                </div>
+
+                <div class="results-section">
+                    <h2>Totals</h2>
+                    <div id="results-container">
+                        <p class="placeholder">Add items and enter total to see results</p>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="saved-bills">
+            <div class="saved-bills-container">
+                <div id="saved-bills-list">
+                    <p class="placeholder">No saved bills yet</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
