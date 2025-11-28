@@ -214,15 +214,19 @@ parseReceiptBtn.addEventListener('click', async () => {
 
 addAllParsedBtn.addEventListener('click', () => {
     parsedItems.forEach(item => {
-        if (item.price > 0 && item.person) {
+        if (item.price > 0) {
             const itemId = Date.now() + Math.random();
-            items.push({
-                id: itemId,
-                price: item.price,
-                person: item.person
-            });
-            if (item.person) {
-                people.add(item.person);
+            const peopleList = item.people || (item.person ? [item.person] : []);
+            
+            if (peopleList.length > 0) {
+                items.push({
+                    id: itemId,
+                    price: item.price,
+                    people: peopleList
+                });
+                peopleList.forEach(person => {
+                    people.add(person);
+                });
             }
         }
     });
@@ -245,24 +249,31 @@ clearParsedBtn.addEventListener('click', () => {
 // Add a new item from the form inputs
 function addItem() {
     const price = parseFloat(itemPriceInput.value) || 0;
-    const person = itemPersonInput.value.trim();
+    const personInput = itemPersonInput.value.trim();
 
-    // Require both price and person
-    if (price <= 0 || !person) {
+    // Require both price and at least one person
+    if (price <= 0 || !personInput) {
         return; // Don't add items without both price and person
+    }
+
+    // Parse multiple people (comma-separated)
+    const peopleList = personInput.split(',').map(p => p.trim()).filter(p => p.length > 0);
+
+    if (peopleList.length === 0) {
+        return;
     }
 
     const itemId = Date.now();
     items.push({
         id: itemId,
         price: price,
-        person: person
+        people: peopleList  // Changed from person to people (array)
     });
 
     // Update people set
-    if (person) {
+    peopleList.forEach(person => {
         people.add(person);
-    }
+    });
 
     // Clear the input fields
     itemPriceInput.value = '';
@@ -288,11 +299,16 @@ function displayItems() {
             ? (item.price / subtotal) * totalPaid 
             : item.price;
 
+        const peopleList = item.people || (item.person ? [item.person] : []); // Support both old and new format
+        const peopleDisplay = peopleList.length > 0 
+            ? peopleList.map(p => escapeHtml(p)).join(', ')
+            : 'No person';
+        
         itemsHTML += `
             <div class="item-display">
                 <div class="item-info">
                     <span class="item-price-display">$${item.price.toFixed(2)}</span>
-                    ${item.person ? `<span class="item-person-display">${escapeHtml(item.person)}</span>` : '<span class="item-person-display no-person">No person</span>'}
+                    <span class="item-person-display ${peopleList.length === 0 ? 'no-person' : ''}">${peopleDisplay}</span>
                 </div>
                 ${totalPaid > 0 ? `<div class="item-final-price">$${finalPrice.toFixed(2)}</div>` : ''}
                 <button type="button" class="btn btn-danger remove-item" data-id="${item.id}">Remove</button>
@@ -305,24 +321,41 @@ function displayItems() {
     // Add event listeners for remove buttons
     document.querySelectorAll('.remove-item').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            const id = parseInt(e.target.dataset.id);
-            removeItem(id);
+            e.preventDefault();
+            e.stopPropagation();
+            const idValue = btn.getAttribute('data-id');
+            if (idValue) {
+                // Try to parse as number (could be integer or float)
+                const id = parseFloat(idValue);
+                if (!isNaN(id)) {
+                    removeItem(id);
+                }
+            }
         });
     });
 }
 
 // Remove an item
 function removeItem(id) {
-    const item = items.find(i => i.id === id);
-    if (item && item.person) {
-        // Check if this person has other items
-        const hasOtherItems = items.some(i => i.id !== id && i.person === item.person);
-        if (!hasOtherItems) {
-            people.delete(item.person);
-        }
+    // Normalize ID for comparison (handle both number and string)
+    const normalizedId = typeof id === 'string' ? parseFloat(id) : id;
+    
+    const item = items.find(i => Math.abs(i.id - normalizedId) < 0.001); // Handle float comparison
+    if (item) {
+        const peopleList = item.people || (item.person ? [item.person] : []);
+        // Check if each person has other items
+        peopleList.forEach(person => {
+            const hasOtherItems = items.some(i => 
+                Math.abs(i.id - normalizedId) >= 0.001 && // Different item
+                (i.people?.includes(person) || i.person === person)
+            );
+            if (!hasOtherItems) {
+                people.delete(person);
+            }
+        });
     }
     
-    items = items.filter(i => i.id !== id);
+    items = items.filter(i => Math.abs(i.id - normalizedId) >= 0.001);
     displayItems();
     calculateResults();
 }
@@ -356,14 +389,21 @@ function calculateResults() {
         };
     }).filter(item => item !== null);
 
-    // Group by person and sum
+    // Group by person and sum (with even splitting for multiple people)
     const personTotals = {};
     itemsWithFinalPrice.forEach(item => {
-        if (item.person) {
-            if (!personTotals[item.person]) {
-                personTotals[item.person] = 0;
-            }
-            personTotals[item.person] += item.finalPrice;
+        const peopleList = item.people || (item.person ? [item.person] : []);
+        
+        if (peopleList.length > 0) {
+            // Split the final price evenly among all people assigned to this item
+            const pricePerPerson = item.finalPrice / peopleList.length;
+            
+            peopleList.forEach(person => {
+                if (!personTotals[person]) {
+                    personTotals[person] = 0;
+                }
+                personTotals[person] += pricePerPerson;
+            });
         }
     });
 
@@ -420,7 +460,8 @@ function saveBill() {
         items: items.map(item => ({
             id: item.id,
             price: item.price,
-            person: item.person
+            people: item.people || (item.person ? [item.person] : []),
+            person: item.person || (item.people && item.people.length > 0 ? item.people[0] : '') // Keep for backward compatibility
         })),
         savedAt: new Date().toISOString()
     };
@@ -538,14 +579,18 @@ function loadBill(id) {
     items = bill.items.map(item => ({
         id: item.id,
         price: item.price,
-        person: item.person
+        people: item.people || (item.person ? [item.person] : []),
+        person: item.person || (item.people && item.people.length > 0 ? item.people[0] : '') // Keep for backward compatibility
     }));
     
     // Update people set
     items.forEach(item => {
-        if (item.person) {
-            people.add(item.person);
-        }
+        const peopleList = item.people || (item.person ? [item.person] : []);
+        peopleList.forEach(person => {
+            if (person) {
+                people.add(person);
+            }
+        });
     });
     
     // Refresh display
@@ -581,7 +626,7 @@ function parseReceiptText(text) {
     window.lastReceiptText = text;
     
     const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-    const items = [];
+    const parsedItemsList = [];
     const seenItems = new Set(); // Avoid duplicates
     
     // More comprehensive price patterns
@@ -708,7 +753,7 @@ function parseReceiptText(text) {
                 // Skip if name looks like a summary
                 if (itemName.match(/^(TOTAL|SUBTOTAL|TAX|TIP|GRATUITY|AMOUNT)/i)) continue;
             } else {
-                itemName = `Item ${items.length + 1}`;
+                itemName = `Item ${parsedItemsList.length + 1}`;
             }
             
             // Create unique key to avoid duplicates (use price + index)
@@ -716,17 +761,18 @@ function parseReceiptText(text) {
             if (seenItems.has(itemKey)) continue;
             seenItems.add(itemKey);
             
-            items.push({
+            parsedItemsList.push({
                 id: Date.now() + i,
-                name: itemName || `Item ${items.length + 1}`,
+                name: itemName || `Item ${parsedItemsList.length + 1}`,
                 price: price,
-                person: ''
+                people: [],
+                person: '' // Keep for backward compatibility
             });
         }
     }
     
     // If still very few items, try more aggressive parsing
-    if (items.length < 3) {
+    if (parsedItemsList.length < 3) {
         // Look for any line with a decimal number that could be a price
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
@@ -753,11 +799,12 @@ function parseReceiptText(text) {
                             // Only skip if it's clearly a summary line, otherwise accept it
                             if (!itemName.match(/^(TOTAL|SUBTOTAL|TAX|TIP|GRATUITY|AMOUNT)/i)) {
                                 seenItems.add(itemKey);
-                                items.push({
+                                parsedItemsList.push({
                                     id: Date.now() + i + 10000,
-                                    name: itemName || `Item ${items.length + 1}`,
+                                    name: itemName || `Item ${parsedItemsList.length + 1}`,
                                     price: num,
-                                    person: ''
+                                    people: [],
+                                    person: '' // Keep for backward compatibility
                                 });
                                 break; // Only take first reasonable price per line
                             }
@@ -768,7 +815,7 @@ function parseReceiptText(text) {
         }
     }
     
-    return items;
+    return parsedItemsList;
 }
 
 // Display parsed items in editable format
@@ -789,8 +836,8 @@ function displayParsedItems() {
                             <input type="number" class="parsed-item-price" value="${item.price.toFixed(2)}" step="0.01" min="0" data-index="${index}" style="width: 100%; padding: 6px 0; border: none; border-bottom: 1px solid rgba(0,0,0,0.2); background: transparent; font-size: 0.9rem;">
                         </div>
                         <div class="form-group" style="margin-bottom: 10px;">
-                            <label style="font-size: 0.85rem;">Person</label>
-                            <input type="text" class="parsed-item-person" value="${escapeHtml(item.person)}" placeholder="Enter name" data-index="${index}" style="width: 100%; padding: 6px 0; border: none; border-bottom: 1px solid rgba(0,0,0,0.2); background: transparent; font-size: 0.9rem;">
+                            <label style="font-size: 0.85rem;">Person(s) - comma separated</label>
+                            <input type="text" class="parsed-item-person" value="${escapeHtml((item.people || (item.person ? [item.person] : [])).join(', '))}" placeholder="Enter name(s), e.g. Alice, Bob" data-index="${index}" style="width: 100%; padding: 6px 0; border: none; border-bottom: 1px solid rgba(0,0,0,0.2); background: transparent; font-size: 0.9rem;">
                         </div>
                     </div>
                 </div>
@@ -810,7 +857,11 @@ function displayParsedItems() {
     document.querySelectorAll('.parsed-item-person').forEach(input => {
         input.addEventListener('input', (e) => {
             const index = parseInt(e.target.dataset.index);
-            parsedItems[index].person = e.target.value.trim();
+            const peopleInput = e.target.value.trim();
+            const peopleList = peopleInput.split(',').map(p => p.trim()).filter(p => p.length > 0);
+            parsedItems[index].people = peopleList;
+            // Keep person for backward compatibility
+            parsedItems[index].person = peopleList.length > 0 ? peopleList[0] : '';
         });
     });
 }
