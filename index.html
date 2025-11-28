@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dinner Bill Splitter</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -29,7 +30,31 @@
                     <label for="total-paid">Total Amount Paid (after tax & tip)</label>
                     <input type="number" id="total-paid" step="0.01" min="0" placeholder="0.00">
                 </div>
-                <div class="add-item-form">
+                <div class="receipt-upload-form">
+                    <h2>Upload Receipt Photo</h2>
+                    <div class="form-group">
+                        <label for="receipt-upload">Upload Receipt</label>
+                        <input type="file" id="receipt-upload" accept="image/png,image/jpeg,image/jpg,image/bmp,image/webp,image/gif" style="display: none;">
+                        <button type="button" id="upload-receipt-btn" class="btn btn-primary">Choose Receipt Photo</button>
+                        <div id="receipt-preview" style="margin-top: 10px; display: none;">
+                            <img id="receipt-image" style="max-width: 100%; max-height: 200px; border: 1px solid #ccc;">
+                            <div style="margin-top: 10px;">
+                                <button type="button" id="parse-receipt-btn" class="btn btn-primary">Parse Receipt</button>
+                                <button type="button" id="cancel-upload-btn" class="btn btn-danger" style="margin-left: 10px;">Cancel</button>
+                            </div>
+                            <div id="parsing-status" style="margin-top: 10px; font-size: 0.85rem; opacity: 0.7;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="parsed-items-section" id="parsed-items-section" style="display: none; margin-top: 25px; padding-top: 25px; border-top: 1px solid rgba(0, 0, 0, 0.1);">
+                    <h2>Parsed Receipt Items</h2>
+                    <div id="parsed-items-container"></div>
+                    <div class="form-group" style="margin-top: 15px;">
+                        <button type="button" id="add-all-parsed-btn" class="btn btn-primary">Add All to Bill</button>
+                        <button type="button" id="clear-parsed-btn" class="btn btn-danger" style="margin-left: 10px;">Clear</button>
+                    </div>
+                </div>
+                <div class="add-item-form" style="margin-top: 25px; padding-top: 25px; border-top: 1px solid rgba(0, 0, 0, 0.1);">
                     <h2>Add Receipt Item</h2>
                     <div class="form-group">
                         <label for="item-price">Item Price</label>

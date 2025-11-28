@@ -350,6 +350,59 @@ header h1 {
     font-size: 0.85rem;
 }
 
+.receipt-upload-form {
+    margin-top: 25px;
+    padding-top: 25px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.receipt-upload-form h2 {
+    font-size: 1.25rem;
+    color: black;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+#receipt-preview {
+    margin-top: 15px;
+}
+
+#receipt-preview img {
+    max-width: 100%;
+    max-height: 200px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+#parsing-status {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    opacity: 0.7;
+    color: black;
+}
+
+.parsed-items-section h2 {
+    font-size: 1.25rem;
+    color: black;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.parsed-item-row {
+    padding: 15px 0;
+    margin-bottom: 15px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.parsed-item-row:last-child {
+    border-bottom: none;
+}
+
+.parsed-item-fields input:focus {
+    outline: none;
+    border-bottom-color: black;
+}
+
 @media (max-width: 768px) {
     .main-content {
         grid-template-columns: 1fr;
