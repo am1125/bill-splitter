@@ -8,9 +8,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Split">
     <link rel="manifest" href="manifest.webmanifest">
-    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=2">
     <title>Dinner Bill Splitter</title>
-    <link rel="stylesheet" href="style.css?v=16">
+    <link rel="stylesheet" href="style.css?v=17">
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
 </head>
 <body>
@@ -18,8 +18,8 @@
     <header class="app-header">
         <a class="brand" href="./" aria-label="Bill Splitter home">split</a>
         <nav class="tabs" aria-label="Bills">
-            <button class="tab-btn" data-tab="current"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v18l-2.5-2-2.5 2-2.5-2L7 21V3Z"/><path d="M10 8h4m-4 4h4"/></svg><span>Current bill</span></button>
-            <button class="tab-btn" data-tab="saved"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4V4Z"/></svg><span>Saved bills</span></button>
+            <button class="tab-btn" data-tab="current"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v18l-2.5-2-2.5 2-2.5-2L7 21V3Z"/><path d="M10 8h4m-4 4h4"/></svg><span>Current Bill</span></button>
+            <button class="tab-btn" data-tab="saved"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4V4Z"/></svg><span>Saved Bills</span></button>
         </nav>
     </header>
     <section class="tab-content active landing-page" id="landing-page" aria-labelledby="landing-title">
@@ -41,15 +41,16 @@
             <p class="subtitle">Add names, items, and the total paid.</p>
         </div>
         <nav class="flow-progress" aria-label="Dinner steps"><span data-progress="0">1. People</span><span data-progress="1">2. Items</span><span data-progress="2">3. Assign</span><span data-progress="3">4. Total</span><span data-progress="4">5. Results</span></nav>
+        <p id="flow-step-label" class="mobile-step-label">People · 1 of 5</p>
         <p id="flow-error" class="flow-error" role="alert" hidden></p>
         <section class="flow-step" data-step="0">
-            <h1 tabindex="-1">Who’s at dinner?</h1><p class="helper">Add everyone before you start splitting.</p>
-            <div class="guest-entry"><div class="form-group"><label for="guest-name">Name</label><input id="guest-name" enterkeyhint="done" autocapitalize="words" placeholder="e.g. Aaron" autocomplete="off"></div><button id="add-guest" class="btn btn-primary" type="button">+ Add person</button></div>
-            <div id="guest-list" class="guest-list"></div>
-            <div class="flow-actions"><button type="button" class="btn btn-primary" data-next>Next: Receipt & Items →</button></div>
+            <h1 tabindex="-1">Who’s at dinner?</h1>
+            <div id="guest-list" class="guest-list" aria-live="polite"></div>
+            <div class="guest-entry"><div class="form-group"><label class="sr-only" for="guest-name">Person’s name</label><input id="guest-name" enterkeyhint="done" autocapitalize="words" placeholder="Add someone…" autocomplete="off"></div><button id="add-guest" class="btn btn-primary" type="button" aria-label="Add person"><span aria-hidden="true">+</span></button></div>
+            <div class="flow-actions"><button type="button" class="btn btn-primary" data-next><span>Next: Receipt</span><span aria-hidden="true">→</span></button></div>
         </section>
         <section class="flow-step" data-step="1" hidden>
-            <h1 tabindex="-1">What was on the table?</h1><p class="helper">Upload and scan your receipt, enter everything manually, or combine both.</p>
+            <h1 tabindex="-1">Receipt items</h1><p class="helper">Upload and scan your receipt, enter everything manually, or combine both.</p>
                 <div class="receipt-upload-form">
                     <input type="file" id="receipt-upload" accept="image/png,image/jpeg,image/jpg,image/bmp,image/webp,image/gif" hidden>
                     <input type="file" id="receipt-camera" accept="image/*" capture="environment" hidden>
@@ -107,8 +108,8 @@
             <div class="flow-actions"><button type="button" class="btn btn-secondary" data-back>← Edit total</button><button type="button" class="btn btn-secondary" id="reset-bill">Start over / clear bill</button></div>
         </section>
     </div>
-    <div class="tab-content" id="saved-bills"><div class="page-heading"><h1>Saved bills</h1><p class="subtitle">View or load a saved bill.</p></div><div class="saved-bills-container"><div id="saved-bills-list"><p class="placeholder">No saved bills yet</p></div></div></div>
+    <div class="tab-content" id="saved-bills"><div class="page-heading"><h1>Saved Bills</h1><p class="subtitle">View or load a saved bill.</p></div><div class="saved-bills-container"><div id="saved-bills-list"><p class="placeholder">No saved bills yet</p></div></div></div>
 </div>
-<script src="script.js?v=9"></script>
+<script src="script.js?v=10"></script>
 </body>
 </html>

@@ -864,7 +864,7 @@ function clearFlowError() {
 }
 function renderGuests() {
     document.getElementById('guest-list').innerHTML = dinnerGuests.map((name, index) =>
-        `<span class="guest-chip">${escapeHtml(name)}<button type="button" data-guest-remove="${index}" aria-label="Remove ${escapeAttribute(name)}">×</button></span>`).join('');
+        `<span class="guest-chip"><span class="guest-name">${escapeHtml(name)}</span><button type="button" data-guest-remove="${index}" aria-label="Remove ${escapeAttribute(name)}">×</button></span>`).join('');
     document.querySelectorAll('[data-guest-remove]').forEach(button => button.addEventListener('click', () => {
         const name = dinnerGuests[Number(button.dataset.guestRemove)];
         if (items.some(item => item.people?.includes(name)) && !confirm(`Remove ${name} and their item assignments?`)) return;
@@ -901,6 +901,7 @@ function renderAssignments() {
 }
 function goToStep(step) {
     currentStep = step;
+    document.getElementById('flow-step-label').textContent = `${['People', 'Items', 'Assign', 'Total', 'Results'][step]} · ${step + 1} of 5`;
     clearFlowError();
     flowSteps.forEach(panel => { panel.hidden = Number(panel.dataset.step) !== step; });
     document.querySelectorAll('[data-progress]').forEach(label => {
@@ -955,7 +956,6 @@ document.getElementById('reset-bill').addEventListener('click', () => {
     tabContents.forEach(panel => panel.classList.toggle('active', panel.id === 'current-bill'));
     goToStep(0);
     window.scrollTo({top: 0, behavior: 'instant'});
-    guestNameInput.focus();
 });
 goToStep(0);
 
@@ -1000,5 +1000,4 @@ document.getElementById('get-started').addEventListener('click', () => {
     tabButtons.forEach(button => button.classList.toggle('active', button.dataset.tab === 'current'));
     goToStep(0);
     window.scrollTo({top: 0, behavior: 'instant'});
-    guestNameInput.focus();
 });
