@@ -2,9 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#f6f4ed">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Split">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <title>Dinner Bill Splitter</title>
-    <link rel="stylesheet" href="style.css?v=14">
+    <link rel="stylesheet" href="style.css?v=15">
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
 </head>
 <body>
@@ -38,7 +44,7 @@
         <p id="flow-error" class="flow-error" role="alert" hidden></p>
         <section class="flow-step" data-step="0">
             <h1 tabindex="-1">Who’s at dinner?</h1><p class="helper">Add everyone before you start splitting.</p>
-            <div class="guest-entry"><div class="form-group"><label for="guest-name">Name</label><input id="guest-name" placeholder="e.g. Aaron" autocomplete="off"></div><button id="add-guest" class="btn btn-primary" type="button">+ Add person</button></div>
+            <div class="guest-entry"><div class="form-group"><label for="guest-name">Name</label><input id="guest-name" enterkeyhint="done" autocapitalize="words" placeholder="e.g. Aaron" autocomplete="off"></div><button id="add-guest" class="btn btn-primary" type="button">+ Add person</button></div>
             <div id="guest-list" class="guest-list"></div>
             <div class="flow-actions"><button type="button" class="btn btn-primary" data-next>Next: Receipt & Items →</button></div>
         </section>
@@ -46,7 +52,11 @@
             <h1 tabindex="-1">What was on the table?</h1><p class="helper">Upload and scan your receipt, enter everything manually, or combine both.</p>
                 <div class="receipt-upload-form">
                     <input type="file" id="receipt-upload" accept="image/png,image/jpeg,image/jpg,image/bmp,image/webp,image/gif" hidden>
-                    <button type="button" id="upload-receipt-btn" class="btn btn-secondary"><span aria-hidden="true">↑</span> Upload receipt</button>
+                    <input type="file" id="receipt-camera" accept="image/*" capture="environment" hidden>
+                    <div class="receipt-source-actions">
+                    <button type="button" id="take-receipt-btn" class="btn btn-primary camera-button">Take receipt photo</button>
+                    <button type="button" id="upload-receipt-btn" class="btn btn-secondary"><span aria-hidden="true">↑</span> Choose receipt photo</button>
+                    </div>
                     <p id="scan-service-note" class="helper scan-note">Free receipt scanning runs on your device. Your receipt photo stays in your browser.</p>
                     <div id="receipt-preview" style="display:none">
                         <img id="receipt-image" alt="Uploaded receipt preview">
@@ -67,7 +77,7 @@
                 <div class="add-item-form">
                     <h2>Add an item</h2>
                     <div class="item-fields">
-                        <div class="form-group"><label for="item-price">Item price</label><input type="number" id="item-price" step="0.01" min="0" placeholder="0.00" required></div>
+                        <div class="form-group"><label for="item-price">Item price</label><input type="number" inputmode="decimal" id="item-price" step="0.01" min="0" placeholder="0.00" required></div>
                         <div class="form-group"><label for="item-name">Item name (optional)</label><input type="text" id="item-name" placeholder="e.g. Pasta"></div><input id="item-person" type="hidden">
                     </div>
                     <div class="line"><p class="helper">Enter the full price for each item.</p><button type="button" id="add-item-btn" class="btn btn-primary">+ Add item</button></div>
@@ -84,7 +94,7 @@
         <section class="flow-step" data-step="3" hidden>
             <h1 tabindex="-1">How much did you pay?</h1><p class="helper">Enter the final amount, including tax and tip.</p>
             <p id="bill-subtotal" class="helper"></p>
-            <div class="paid-section"><label for="total-paid">Total paid <span>Including tax & tip</span></label><div class="currency-field"><span aria-hidden="true">$</span><input type="number" id="total-paid" step="0.01" min="0" placeholder="0.00"></div></div>
+            <div class="paid-section"><label for="total-paid">Total paid <span>Including tax & tip</span></label><div class="currency-field"><span aria-hidden="true">$</span><input type="number" inputmode="decimal" id="total-paid" step="0.01" min="0" placeholder="0.00"></div></div>
             <button type="button" id="use-receipt-total" class="btn btn-secondary" hidden>Use detected total paid</button>
             <div class="flow-actions"><button type="button" class="btn btn-secondary" data-back>← Back</button><button type="button" class="btn btn-primary" data-next>See the split →</button></div>
         </section>
@@ -99,6 +109,6 @@
     </div>
     <div class="tab-content" id="saved-bills"><div class="page-heading"><h1>Saved bills</h1><p class="subtitle">View or load a saved bill.</p></div><div class="saved-bills-container"><div id="saved-bills-list"><p class="placeholder">No saved bills yet</p></div></div></div>
 </div>
-<script src="script.js?v=7"></script>
+<script src="script.js?v=8"></script>
 </body>
 </html>

@@ -30,3 +30,9 @@ Use **Start over / clear bill** on the results screen to clear the current dinne
 python3 -m unittest discover -s tests
 node tests/receipt-ui.cjs
 ```
+
+## iPhone / Home Screen
+
+Open the hosted site in Safari, tap Share → Add to Home Screen, and enable Open as Web App if offered. The icon opens a standalone view. The layout adapts automatically to screen width and touch input; no device setting is needed. Use **Take receipt photo** for the rear camera or **Choose receipt photo** for an existing image (the browser controls available camera choices).
+
+Price fields request a decimal keyboard. Forms use larger touch targets and respect iPhone safe areas. Saved bills remain local to the browser/web app; they do not sync, and existing Safari bills may not appear in the Home Screen app. Receipt scanning still needs internet access for OCR downloads. Offline support is not included.

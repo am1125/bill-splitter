@@ -26,3 +26,36 @@
 
 /* Welcome screen */
 .landing-hero{padding:85px 0 62px;max-width:700px}.landing-hero h1{font-size:clamp(38px,5.5vw,62px);font-weight:550;letter-spacing:-2.5px;line-height:1.1;margin:18px 0 22px}.landing-hero h1 span{color:#7b896b}.landing-description{font-size:17px;line-height:1.65;max-width:490px;color:var(--muted);margin:0 0 28px}.landing-hero .btn{padding:13px 23px;font-size:14px;gap:35px}.landing-note{font-size:12px;color:var(--muted);margin:13px 0 0}.landing-how{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px;padding:28px 0 0;margin:0;list-style:none;border-top:1px solid var(--line)}.landing-how li{display:flex;align-items:start;gap:13px}.landing-number{display:grid;place-items:center;min-width:30px;height:30px;background:var(--sage);border-radius:5px;font-size:12px}.landing-how h2{font-size:14px;margin:3px 0 8px}.landing-how p{font-size:12px;color:var(--muted);margin:0;line-height:1.6}@media(max-width:650px){.landing-hero{padding:52px 0 40px}.landing-hero h1{letter-spacing:-1.6px}.landing-description{font-size:15px}.landing-how{grid-template-columns:1fr;gap:22px}.landing-how h2{margin-bottom:4px}}
+
+/* Adapt to available space and touch input, including Home Screen launches. */
+html{scroll-padding-top:20px}body{min-height:100vh;min-height:100dvh}
+.container{padding-top:env(safe-area-inset-top);padding-left:max(40px,env(safe-area-inset-left));padding-right:max(40px,env(safe-area-inset-right));padding-bottom:max(60px,env(safe-area-inset-bottom))}
+.receipt-source-actions{display:flex;flex-wrap:wrap;gap:12px}.camera-button{display:none}
+input{scroll-margin-block:100px}button{touch-action:manipulation}
+@media(pointer:coarse){
+    .camera-button{display:inline-flex}
+    .btn,.tab-btn,.guest-chip button,.assignment-choices label{min-height:44px}
+    .guest-chip button{min-width:44px}.guest-chip{padding-right:4px}
+    .assignment-choices input{width:20px;height:20px}
+}
+@media(max-width:600px){
+    .container{padding-left:max(18px,env(safe-area-inset-left));padding-right:max(18px,env(safe-area-inset-right));padding-bottom:calc(32px + env(safe-area-inset-bottom))}
+    body{font-size:16px}.app-header{gap:12px;padding:14px 0}.brand{font-size:25px}.tabs{gap:14px}.tab-btn{font-size:14px;min-height:44px}
+    .page-heading{padding:24px 0 20px}.page-heading #bill-name{font-size:28px;letter-spacing:-.8px}
+    .subtitle,.helper{font-size:14px}.flow-step>h1{font-size:24px}
+    .btn{min-height:48px;font-size:15px;padding:12px 16px}
+    .form-group input,.parsed-item-fields input{font-size:16px!important;min-height:48px}
+    .form-group label{font-size:14px}.currency-field input{font-size:28px;min-height:48px}
+    .flow-progress{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;font-size:11px;margin-bottom:24px;padding-bottom:12px;text-align:center}
+    .flow-progress span{padding:8px 0;white-space:nowrap}.flow-progress [aria-current="step"]{padding-bottom:6px}
+    .guest-entry{max-width:none;align-items:stretch;flex-direction:column}.guest-chip{max-width:100%;overflow-wrap:anywhere}
+    .receipt-source-actions{display:grid;grid-template-columns:1fr}.camera-button{display:inline-flex}
+    .item-fields{grid-template-columns:1fr}.line{align-items:stretch;flex-direction:column}.line .helper{max-width:none}.line .btn{width:100%}
+    .flow-actions{display:grid;grid-template-columns:1fr;margin-top:28px;padding-top:18px}.flow-actions .btn-primary{grid-row:1}
+    .assignment-item{min-width:0;margin-inline:0;padding:16px 12px}.assignment-item legend{max-width:100%;overflow-wrap:anywhere}
+    .assignment-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.assignment-choices label{min-width:0;min-height:48px;overflow-wrap:anywhere}.assignment-choices input{flex-shrink:0}
+    .parsed-items-section{padding:16px 12px}.review-fields{grid-template-columns:1fr}.actions>.btn{flex:1 1 140px}
+    .person-name{min-width:0}.person-amount{flex-shrink:0}.saved-bill-item{padding:18px}.saved-bill-actions{width:100%;flex-wrap:wrap}.saved-bill-actions .btn{flex:1}
+    .result-item .line{flex-direction:row}.result-person{padding:16px}.landing-hero{padding:38px 0}.landing-hero .btn{width:100%;justify-content:space-between}
+}
+@media(display-mode:standalone){.app-header{padding-top:16px}.container{min-height:100dvh}}

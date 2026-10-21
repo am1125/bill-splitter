@@ -18,6 +18,8 @@ const savedBillsList = document.getElementById('saved-bills-list');
 
 // Receipt upload elements
 const receiptUpload = document.getElementById('receipt-upload');
+const receiptCamera = document.getElementById('receipt-camera');
+const takeReceiptBtn = document.getElementById('take-receipt-btn');
 const uploadReceiptBtn = document.getElementById('upload-receipt-btn');
 const receiptPreview = document.getElementById('receipt-preview');
 const receiptImage = document.getElementById('receipt-image');
@@ -98,19 +100,28 @@ function resetReceipt() {
     parsedItemsSection.style.display = 'none';
     parsingStatus.textContent = '';
     uploadReceiptBtn.disabled = false;
+    takeReceiptBtn.disabled = false;
     parseReceiptBtn.disabled = false;
 }
 
+takeReceiptBtn.addEventListener('click', () => {
+    if (parsedItems.length && !confirm('Replace the receipt draft and its remaining items?')) return;
+    receiptCamera.value = '';
+    receiptCamera.click();
+});
+receiptCamera.addEventListener('change', handleReceiptSelection);
 uploadReceiptBtn.addEventListener('click', () => {
     if (parsedItems.length && !confirm('Replace the receipt draft and its remaining items?')) return;
+    receiptUpload.value = '';
     receiptUpload.click();
 });
-receiptUpload.addEventListener('change', event => {
+receiptUpload.addEventListener('change', handleReceiptSelection);
+function handleReceiptSelection(event) {
     const file = event.target.files[0];
     if (!file) return;
     if (!['image/png', 'image/jpeg', 'image/webp', 'image/bmp', 'image/gif'].includes(file.type) || file.size > 10 * 1024 * 1024) {
         document.getElementById('scan-service-note').textContent = 'Choose an image under 10 MB (PNG, JPEG, WebP, BMP, or GIF).';
-        receiptUpload.value = '';
+        event.target.value = '';
         return;
     }
     resetReceipt();
@@ -124,7 +135,7 @@ receiptUpload.addEventListener('change', event => {
     };
     reader.onerror = () => { parsingStatus.textContent = 'Could not read the image. Try another photo.'; };
     reader.readAsDataURL(file);
-});
+}
 cancelUploadBtn.addEventListener('click', () => {
     if (parsedItems.length && !confirm('Discard the receipt draft?')) return;
     resetReceipt();
@@ -140,6 +151,7 @@ async function scanReceipt() {
     const version = ++scanVersion;
     parseReceiptBtn.disabled = true;
     uploadReceiptBtn.disabled = true;
+    takeReceiptBtn.disabled = true;
     parsingStatus.textContent = 'Loading on-device OCR…';
     try {
         if (typeof Tesseract === 'undefined') throw new Error('OCR did not load. Check your connection and refresh.');
@@ -174,6 +186,7 @@ async function scanReceipt() {
         if (version === scanVersion) {
             parseReceiptBtn.disabled = false;
             uploadReceiptBtn.disabled = false;
+            takeReceiptBtn.disabled = false;
         }
     }
 }
@@ -804,8 +817,8 @@ function displayParsedItems() {
             <div class="line"><strong>Item ${index + 1}${item.needsReview ? ' · Check against photo' : ''}</strong><button type="button" class="btn btn-danger" data-remove="${index}">Remove</button></div>
             <div class="form-group"><label for="review-name-${index}">Item name</label><input id="review-name-${index}" data-field="name" data-index="${index}" value="${escapeAttribute(item.name)}"></div>
             <div class="review-fields">
-                <div class="form-group"><label for="review-qty-${index}">Quantity</label><input type="number" min="0.01" step="any" id="review-qty-${index}" data-field="quantity" data-index="${index}" value="${item.quantity ?? ''}" placeholder="Unknown"></div>
-                <div class="form-group"><label for="review-price-${index}">Line total</label><input type="number" min="0" step="0.01" id="review-price-${index}" data-field="price" data-index="${index}" value="${item.price.toFixed(2)}"></div>
+                <div class="form-group"><label for="review-qty-${index}">Quantity</label><input type="number" inputmode="decimal" min="0.01" step="any" id="review-qty-${index}" data-field="quantity" data-index="${index}" value="${item.quantity ?? ''}" placeholder="Unknown"></div>
+                <div class="form-group"><label for="review-price-${index}">Line total</label><input type="number" inputmode="decimal" min="0" step="0.01" id="review-price-${index}" data-field="price" data-index="${index}" value="${item.price.toFixed(2)}"></div>
             </div>
         </div>`).join('') || '<p class="placeholder">No remaining items. Add a missing item or scan another receipt.</p>';
     parsedItemsContainer.querySelectorAll('[data-field]').forEach(input => input.addEventListener('input', () => {

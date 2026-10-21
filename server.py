@@ -21,7 +21,10 @@ class Handler(BaseHTTPRequestHandler):
         path = self.path.split("?", 1)[0]
         # Explicit allowlist prevents serving secrets, source, or .git files.
         files = {"/": ("index.html", "text/html"), "/index.html": ("index.html", "text/html"),
-                 "/script.js": ("script.js", "text/javascript"), "/style.css": ("style.css", "text/css")}
+                 "/script.js": ("script.js", "text/javascript"), "/style.css": ("style.css", "text/css"),
+                 "/manifest.webmanifest": ("manifest.webmanifest", "application/manifest+json"),
+                 **{f"/icons/{name}.png": (f"icons/{name}.png", "image/png")
+                    for name in ("apple-touch-icon", "icon-192", "icon-512")}}
         if path not in files:
             return self.send_json(404, {"error": "Not found"})
         name, mime = files[path]
