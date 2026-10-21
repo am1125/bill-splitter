@@ -10,7 +10,7 @@
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=2">
     <title>Dinner Bill Splitter</title>
-    <link rel="stylesheet" href="style.css?v=19">
+    <link rel="stylesheet" href="style.css?v=20">
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
 </head>
 <body>
@@ -95,9 +95,9 @@
             <div class="flow-actions"><button type="button" class="btn btn-secondary" data-back>← Back</button><button type="button" class="btn btn-primary" data-next>Next: Results →</button></div>
         </section>
         <section class="flow-step" data-step="4" hidden>
-                <section class="results-section"><div class="section-header"><h2 tabindex="-1">Everyone’s share</h2></div><p class="helper">Tax and tip are included in each share.</p><div id="results-container" aria-live="polite"><p class="placeholder">Add items and enter total to see results</p></div></section>
-                <div id="results-details"></div>
-                <div class="bill-name-section form-group"><label for="bill-name">Bill name (optional)</label><input type="text" id="bill-name" placeholder="Name this bill" autocomplete="off"></div>
+                <section class="results-section"><div class="section-header"><h1 tabindex="-1">Everyone’s share</h1></div><p class="helper">Tax and tip are included in each share.</p><div id="results-container" aria-live="polite"><p class="placeholder">Add items and enter total to see results</p></div></section>
+                <details class="full-bill-record"><summary>View full bill details</summary><div id="results-details"></div></details>
+                <div class="bill-name-section form-group"><label for="bill-name">Bill name</label><input type="text" id="bill-name" placeholder="Name this bill" autocomplete="off"></div>
                 <button type="button" id="save-bill-btn" class="btn btn-primary save-button">Save bill <span aria-hidden="true">→</span></button>
                 <p class="storage-note">Saved bills stay in this browser.</p>
 
@@ -106,6 +106,6 @@
     </div>
     <div class="tab-content" id="saved-bills"><div class="page-heading"><h1>Saved Bills</h1><p class="subtitle">View or load a saved bill.</p></div><div class="saved-bills-container"><div id="saved-bills-list"><p class="placeholder">No saved bills yet</p></div></div></div>
 </div>
-<script src="script.js?v=11"></script>
+<script src="script.js?v=12"></script>
 </body>
 </html>

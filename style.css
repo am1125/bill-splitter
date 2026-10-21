@@ -201,3 +201,70 @@ input{scroll-margin-block:100px}button{touch-action:manipulation}
 .flow-step .currency-field input::-webkit-inner-spin-button,.flow-step .currency-field input::-webkit-outer-spin-button{appearance:none;margin:0}
 
 .flow-step[data-step="4"]{max-width:680px}
+
+/* Single sheet summary: one surface for shares, breakdowns, and totals. */
+.flow-step[data-step="4"]{max-width:600px}
+.results-section>.section-header{display:block}
+.results-section h1{text-align:center;font-size:34px;line-height:1.15;letter-spacing:-1.2px;margin:0 0 12px;font-weight:600}
+.results-section>.helper{text-align:center;font-size:13px;margin:0 0 28px}
+.summary-sheet{padding:4px 20px 20px;background:var(--surface);border:1px solid var(--line);border-radius:18px}
+.sheet-count{margin:18px 0 0;color:var(--muted);font-size:13px}
+.sheet-person{border-bottom:1px solid var(--line);padding:16px 0}
+.sheet-person>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;list-style:none;cursor:pointer}
+.sheet-person>summary::-webkit-details-marker{display:none}
+.sheet-name{font-size:21px;letter-spacing:-.5px;overflow-wrap:anywhere;min-width:0}
+.sheet-name small{display:block;margin-top:2px;color:var(--muted);font-size:12px;letter-spacing:0}
+.sheet-amount{font-size:26px;letter-spacing:-1px;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:500}
+.sheet-breakdown{margin-top:16px;padding-top:12px;border-top:1px solid var(--line);font-size:13px}
+.sheet-breakdown>div,.sheet-totals>div{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:6px 0}
+.sheet-breakdown>div>span:first-child,.sheet-totals>div>span:first-child{min-width:0;overflow-wrap:anywhere}
+.sheet-breakdown>div>span:last-child,.sheet-totals>div>span:last-child{white-space:nowrap;font-variant-numeric:tabular-nums}
+.sheet-breakdown small{color:var(--muted);font-size:12px}
+.sheet-person-total{border-top:1px solid var(--line);margin-top:6px;font-weight:500}
+.sheet-totals{padding-top:16px;font-size:13px;color:var(--muted)}
+.summary-sheet .total-summary{margin-top:20px;padding:16px;background:var(--sage);border-radius:18px}
+.summary-sheet .total-summary .amount{font-size:28px}
+.full-bill-record{margin-top:24px}
+.full-bill-record>summary{min-height:44px;padding:12px 0;color:var(--muted);font-size:13px;cursor:pointer}
+@media(max-width:380px){.summary-sheet{padding-inline:16px}.sheet-amount{font-size:24px}.results-section h1{font-size:31px}}
+/* Desktop uses the available width rather than imitating a phone screen. */
+@media(min-width:900px){
+    .container{max-width:1200px}
+    #current-bill{padding-top:30px}
+    .flow-progress{gap:32px;margin-bottom:40px}
+    .flow-step{max-width:900px}
+    .flow-step>h1{font-size:30px;letter-spacing:-.8px;text-align:left}
+    .flow-step>.helper{max-width:none;text-align:left;margin:0 0 28px}
+    .flow-step .form-group input{font-size:18px;min-height:44px;padding:10px 0}
+    .flow-step .btn-primary{min-height:44px;border-radius:8px;font-size:14px}
+    .flow-actions{flex-direction:row;justify-content:space-between;align-items:center;margin-top:32px;padding-top:24px;border-top:1px solid var(--line)}
+    .flow-actions .btn{width:auto;min-height:44px}.flow-actions .btn-primary{order:1;min-width:220px;margin-left:auto}
+    .flow-step[data-step="0"]{max-width:640px}
+    .flow-step[data-step="0"]>h1{font-size:30px}
+    .guest-name{font-size:30px}.guest-entry .form-group input{font-size:24px}
+    .flow-step[data-step="0"] .flow-actions .btn{width:auto;min-width:220px}
+    #add-guest{border-radius:50%;width:48px;height:48px;min-height:48px}
+    .flow-step .receipt-source-actions{max-width:none;flex-direction:row;justify-content:flex-start}
+    .flow-step .scan-note{max-width:none;text-align:left;margin:14px 0 0;font-size:12px}
+    .flow-step .add-item-form>h2{text-align:left;font-size:18px}
+    .flow-step .item-fields{grid-template-columns:minmax(120px,1fr) minmax(0,3fr);gap:32px}
+    .flow-step .add-item-form .line{flex-direction:row;justify-content:space-between;text-align:left}
+    .flow-step .assignment-item legend{text-align:left;font-size:20px}
+    .flow-step .assignment-choices{justify-content:flex-start}
+    .flow-step .assignment-choices label{font-size:16px;min-height:44px;padding:10px 16px}
+    .flow-step .paid-section{align-items:flex-start;text-align:left}
+    #bill-subtotal{text-align:left}
+    .flow-step .currency-field{justify-content:flex-start}
+    .flow-step .currency-field input{text-align:left;font-size:44px;min-height:64px}
+    #use-receipt-total{margin-left:0}
+    .flow-step[data-step="4"]{max-width:100%;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(280px,1fr);column-gap:48px;align-items:start}
+    .flow-step[data-step="4"]>.results-section{grid-column:1;grid-row:1/span 5}
+    .results-section h1{text-align:left;font-size:30px}
+    .results-section>.helper{text-align:left}
+    .flow-step[data-step="4"]>.full-bill-record,.flow-step[data-step="4"]>.bill-name-section,.flow-step[data-step="4"]>.save-button,.flow-step[data-step="4"]>.storage-note,.flow-step[data-step="4"]>.flow-actions{grid-column:2}
+    .full-bill-record{margin-top:0}
+    .bill-name-section{text-align:left;margin-top:24px}.bill-name-section input{text-align:left}
+    .flow-step[data-step="4"]>.flow-actions{flex-direction:column;align-items:stretch;gap:4px;margin-top:24px}
+    .flow-step[data-step="4"]>.flow-actions .btn{text-align:left;justify-content:flex-start}
+}
+@media(min-width:900px){.bill-name-section #bill-name{font-size:20px;font-weight:400;letter-spacing:0}}

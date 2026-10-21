@@ -369,24 +369,25 @@ function calculateResults() {
     // Sort people alphabetically
     const sortedPeople = [...new Set([...Object.keys(personTotals), ...dinnerGuests])].sort();
 
+    const money = value => '$' + value.toFixed(2);
+    resultsHTML = `<div class="summary-sheet"><p class="sheet-count">${sortedPeople.length} ${sortedPeople.length === 1 ? 'person' : 'people'}</p>`;
     sortedPeople.forEach(person => {
         const amount = personTotals[person] || 0;
-        resultsHTML += `
-            <div class="person-result">
-                <span class="person-name">${escapeHtml(person)}</span>
-                <span class="person-amount">$${amount.toFixed(2)}</span>
-            </div>
-        `;
+        const assigned = itemsWithFinalPrice.filter(item => (item.people || (item.person ? [item.person] : [])).includes(person));
+        const base = assigned.reduce((sum, item) => sum + item.price / (item.people?.length || 1), 0);
+        resultsHTML += `<details class="sheet-person">
+            <summary><span class="sheet-name">${escapeHtml(person)}<small>View breakdown</small></span><span class="sheet-amount">${money(amount)}</span></summary>
+            <div class="sheet-breakdown">${assigned.length ? assigned.map(item => {
+                const count = item.people?.length || 1;
+                return `<div><span>${escapeHtml(item.name || 'Unnamed item')}${count > 1 ? ` <small>1/${count} share</small>` : ''}</span><span>${money(item.price / count)}</span></div>`;
+            }).join('') : '<p class="helper">No items assigned.</p>'}
+            <div><span>Items subtotal</span><span>${money(base)}</span></div>
+            <div><span>Tax, tip & other adjustments</span><span>${money(amount - base)}</span></div>
+            <div class="sheet-person-total"><span>Total owed</span><span>${money(amount)}</span></div></div>
+        </details>`;
     });
-
-    // Add total summary
-    const calculatedTotal = Object.values(personTotals).reduce((sum, amt) => sum + amt, 0);
-    resultsHTML += `
-        <div class="total-summary">
-            <div class="label">Total Calculated</div>
-            <div class="amount">$${calculatedTotal.toFixed(2)}</div>
-        </div>
-    `;
+    resultsHTML += `<div class="sheet-totals"><div><span>Items subtotal</span><span>${money(subtotal)}</span></div><div><span>Tax, tip & other adjustments</span><span>${money(totalPaid - subtotal)}</span></div></div>
+        <div class="total-summary"><span class="label">Total paid</span><span class="amount">${money(totalPaid)}</span></div></div>`;
 
     resultsContainer.innerHTML = resultsHTML;
 }
