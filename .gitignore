@@ -23,3 +23,6 @@ Thumbs.db
 .env.*
 !.env.example
 __pycache__/
+
+# Local receipt model runtime and private evaluation output
+.local-receipts/

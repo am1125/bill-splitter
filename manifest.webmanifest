@@ -1,6 +1,6 @@
 {
-  "name": "Dinner Bill Splitter",
-  "short_name": "Split",
+  "name": "dinner bill splitter",
+  "short_name": "split",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

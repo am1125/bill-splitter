@@ -237,8 +237,10 @@ function addItem() {
 
 // Display all items on the right side (read-only)
 function displayItems() {
+    document.getElementById('bill-item-count').textContent = `${items.length} ${items.length === 1 ? 'item' : 'items'}`;
+    document.getElementById('items-subtotal').textContent = '$' + items.reduce((sum, item) => sum + (item.price || 0), 0).toFixed(2);
     if (items.length === 0) {
-        itemsContainer.innerHTML = '<p class="placeholder">No items added yet</p>';
+        itemsContainer.innerHTML = '<p class="placeholder">items you add will appear here</p>';
         return;
     }
 
@@ -313,17 +315,17 @@ function removeItem(id) {
 
 // Calculate results
 function calculateResults() {
-    // Refresh items display to show updated final prices
     displayItems();
+    resultsContainer.innerHTML = renderBillSummary(items, parseFloat(totalPaidInput.value) || 0, dinnerGuests);
+}
 
-    const totalPaid = parseFloat(totalPaidInput.value) || 0;
+function renderBillSummary(items, totalPaid, dinnerGuests) {
 
     // Calculate subtotal (sum of all item prices)
     const subtotal = items.reduce((sum, item) => sum + (item.price || 0), 0);
 
     if (subtotal === 0 || totalPaid === 0 || items.length === 0) {
-        resultsContainer.innerHTML = '<p class="placeholder">Add items and enter total to see results</p>';
-        return;
+        return '<p class="placeholder">Add items and enter total to see results</p>';
     }
 
     // Calculate proportion and final price for each item
@@ -341,7 +343,7 @@ function calculateResults() {
     }).filter(item => item !== null);
 
     // Group by person and sum (with even splitting for multiple people)
-    const personTotals = {};
+    const personTotals = Object.create(null);
     itemsWithFinalPrice.forEach(item => {
         const peopleList = item.people || (item.person ? [item.person] : []);
 
@@ -360,8 +362,7 @@ function calculateResults() {
 
     // Display results
     if (Object.keys(personTotals).length === 0) {
-        resultsContainer.innerHTML = '<p class="placeholder">Add people to items to see who owes what</p>';
-        return;
+        return '<p class="placeholder">Add people to items to see who owes what</p>';
     }
 
     let resultsHTML = '';
@@ -389,7 +390,7 @@ function calculateResults() {
     resultsHTML += `<div class="sheet-totals"><div><span>Items subtotal</span><span>${money(subtotal)}</span></div><div><span>Tax, tip & other adjustments</span><span>${money(totalPaid - subtotal)}</span></div></div>
         <div class="total-summary"><span class="label">Total paid</span><span class="amount">${money(totalPaid)}</span></div></div>`;
 
-    resultsContainer.innerHTML = resultsHTML;
+    return resultsHTML;
 }
 
 // Save bill to localStorage
@@ -440,7 +441,7 @@ function saveBill() {
     // Save to localStorage
     localStorage.setItem('savedBills', JSON.stringify(savedBills));
 
-    alert('Bill saved successfully!');
+    showSavedHome();
 }
 
 // Get saved bills from localStorage
@@ -475,7 +476,7 @@ function displaySavedBills() {
                     <span class="saved-bill-meta">${itemCount} item${itemCount !== 1 ? 's' : ''} • $${totalPaid.toFixed(2)} • ${dateStr}</span>
                 </div>
                 <div class="saved-bill-actions">
-                    <button type="button" class="btn btn-primary load-bill" data-id="${bill.id}">Load</button>
+                    <button type="button" class="btn btn-primary load-bill" data-id="${bill.id}">view bill</button>
                     <button type="button" class="btn btn-danger delete-bill" data-id="${bill.id}">Delete</button>
                 </div>
             </div>
@@ -512,67 +513,17 @@ function displaySavedBills() {
     });
 }
 
-// Load a saved bill
+// Viewing a saved bill never replaces the dinner currently being edited.
 function loadBill(id) {
-    const savedBills = getSavedBills();
-    const bill = savedBills.find(b => b.id === id);
-
-    if (!bill) {
-        alert('Bill not found');
-        return;
-    }
-
-    // Clear receipt drafts so a loaded bill cannot inherit another dinner’s scan.
-    resetReceipt();
-    uploadedFile = null;
-    receiptUpload.value = '';
-    receiptImage.removeAttribute('src');
-    receiptPreview.style.display = 'none';
-    receiptSummary = bill.receiptSummary || null;
-
-    // Clear current bill
-    items = [];
-    people = new Set();
-    totalPaidInput.value = '';
-    billNameInput.value = '';
-
-    // Load bill data
-    billNameInput.value = bill.name;
-    totalPaidInput.value = bill.totalPaid || '';
-    items = bill.items.map(item => ({
-        id: item.id,
-        name: item.name || '',
-        quantity: item.quantity ?? null,
-        price: item.price,
-        people: item.people || (item.person ? [item.person] : []),
-        person: item.person || (item.people && item.people.length > 0 ? item.people[0] : '') // Keep for backward compatibility
-    }));
-
-    // Update people set
-    items.forEach(item => {
-        const peopleList = item.people || (item.person ? [item.person] : []);
-        peopleList.forEach(person => {
-            if (person) {
-                people.add(person);
-            }
-        });
-    });
-
-    // Refresh display
-    displayItems();
-    calculateResults();
-
-    // Switch to current bill tab
-    tabButtons.forEach(btn => {
-        if (btn.dataset.tab === 'current') {
-            btn.click();
-        }
-    });
-
-    dinnerGuests = [...new Set([...(bill.participants || []), ...items.flatMap(item => item.people || [])])];
-    renderGuests();
-    goToStep(4);
-    alert('Bill loaded successfully!');
+    const bill = getSavedBills().find(bill => bill.id === id);
+    if (!bill) return;
+    const savedItems = bill.items.map(item => ({...item, people: item.people || (item.person ? [item.person] : [])}));
+    const guests = [...new Set([...(bill.participants || []), ...savedItems.flatMap(item => item.people)])];
+    document.getElementById('saved-dialog-title').textContent = bill.name;
+    document.getElementById('saved-dialog-summary').innerHTML = renderBillSummary(savedItems, bill.totalPaid || 0, guests);
+    renderBillDetails(savedItems, bill.totalPaid || 0, guests, bill.receiptSummary || null, bill.name, document.getElementById('saved-dialog-details'), '');
+    document.getElementById('saved-dialog-record').open = false;
+    document.getElementById('saved-bill-dialog').showModal();
 }
 
 // Delete a saved bill
@@ -851,6 +802,60 @@ function escapeHtml(text) {
 
 // Dinner setup and navigation are separate from the original splitting calculation.
 let dinnerGuests = [];
+// Contacts have stable identities; dinner names remain historical snapshots.
+let savedPeople = readSavedPeople();
+function readSavedPeople() {
+    try {
+        const value = JSON.parse(localStorage.getItem('savedPeople') || '[]');
+        return Array.isArray(value) ? value.filter(person => person && typeof person.id === 'string' && typeof person.name === 'string' && person.name.trim()) : [];
+    } catch { return []; }
+}
+function persistPeople(next) {
+    try {
+        localStorage.setItem('savedPeople', JSON.stringify(next));
+        savedPeople = next;
+        document.getElementById('saved-people-status').textContent = '';
+        return true;
+    } catch {
+        document.getElementById('saved-people-status').textContent = 'Could not save people on this browser. Your current dinner is still available.';
+        return false;
+    }
+}
+function sameName(a, b) { return a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase(); }
+function rememberPerson(name) {
+    if (savedPeople.some(person => sameName(person.name, name))) return;
+    persistPeople([...savedPeople, {id: crypto.randomUUID(), name}]);
+}
+function addSavedPerson(id) {
+    const person = savedPeople.find(person => person.id === id);
+    if (!person) return;
+    if (!dinnerGuests.some(name => sameName(name, person.name))) dinnerGuests.push(person.name);
+    clearFlowError();
+    renderGuests();
+}
+function renameSavedPerson(id, name) {
+    name = name.trim();
+    if (!name || savedPeople.some(person => person.id !== id && sameName(person.name, name))) {
+        document.getElementById('saved-people-status').textContent = 'Enter a name that is not already saved.';
+        return;
+    }
+    if (persistPeople(savedPeople.map(person => person.id === id ? {...person, name} : person))) renderSavedPeople();
+}
+function removeSavedPerson(id) {
+    if (persistPeople(savedPeople.filter(person => person.id !== id))) renderSavedPeople();
+}
+function renderSavedPeople() {
+    const sorted = [...savedPeople].sort((a, b) => a.name.localeCompare(b.name));
+    document.getElementById('saved-people-list').innerHTML = sorted.length ? sorted.map(person => {
+        const added = dinnerGuests.some(name => sameName(name, person.name));
+        return `<button type="button" class="saved-person" data-saved-person="${escapeAttribute(person.id)}" ${added ? 'disabled' : ''}>${escapeHtml(person.name)}${added ? ' ✓' : ' +'}</button>`;
+    }).join('') : '<p class="helper">People you remember will appear here next time.</p>';
+    document.getElementById('manage-people').hidden = !sorted.length;
+    document.getElementById('saved-people-editor').innerHTML = sorted.map((person, index) => `<div class="saved-person-editor"><input id="saved-person-name-${index}" aria-label="Name for ${escapeAttribute(person.name)}" value="${escapeAttribute(person.name)}"><button type="button" data-rename-person="${escapeAttribute(person.id)}" data-name-input="saved-person-name-${index}">Save</button><button type="button" data-remove-person="${escapeAttribute(person.id)}" aria-label="Forget ${escapeAttribute(person.name)}">Forget</button></div>`).join('');
+    document.querySelectorAll('[data-saved-person]').forEach(button => button.addEventListener('click', () => addSavedPerson(button.dataset.savedPerson)));
+    document.querySelectorAll('[data-rename-person]').forEach(button => button.addEventListener('click', () => renameSavedPerson(button.dataset.renamePerson, document.getElementById(button.dataset.nameInput).value)));
+    document.querySelectorAll('[data-remove-person]').forEach(button => button.addEventListener('click', () => removeSavedPerson(button.dataset.removePerson)));
+}
 let currentStep = 0;
 const flowSteps = [...document.querySelectorAll('[data-step]')];
 const flowError = document.getElementById('flow-error');
@@ -864,6 +869,7 @@ function clearFlowError() {
     flowError.textContent = '';
 }
 function renderGuests() {
+    renderSavedPeople();
     document.getElementById('guest-list').innerHTML = dinnerGuests.map((name, index) =>
         `<span class="guest-chip"><span class="guest-name">${escapeHtml(name)}</span><button type="button" data-guest-remove="${index}" aria-label="Remove ${escapeAttribute(name)}">×</button></span>`).join('');
     document.querySelectorAll('[data-guest-remove]').forEach(button => button.addEventListener('click', () => {
@@ -877,7 +883,8 @@ function renderGuests() {
 function addGuests() {
     const names = guestNameInput.value.split(',').map(name => name.trim()).filter(Boolean);
     names.forEach(name => {
-        if (!dinnerGuests.some(guest => guest.toLocaleLowerCase() === name.toLocaleLowerCase())) dinnerGuests.push(name);
+        if (!dinnerGuests.some(guest => sameName(guest, name))) dinnerGuests.push(name);
+        if (document.getElementById('remember-person').checked) rememberPerson(name);
     });
     guestNameInput.value = '';
     renderGuests();
@@ -909,6 +916,7 @@ function goToStep(step) {
         if (Number(label.dataset.progress) === step) label.setAttribute('aria-current', 'step');
         else label.removeAttribute('aria-current');
     });
+    if (step === 0) renderGuests();
     if (step === 1) displayItems();
     if (step === 2) renderAssignments();
     if (step === 3) {
@@ -935,7 +943,8 @@ function nextStep() {
 }
 document.querySelectorAll('[data-next]').forEach(button => button.addEventListener('click', nextStep));
 document.querySelectorAll('[data-back]').forEach(button => button.addEventListener('click', () => goToStep(Math.max(0, currentStep - 1))));
-document.getElementById('reset-bill').addEventListener('click', () => {
+function startNewBill() {
+    selectItemEntry(null);
     items = [];
     people = new Set();
     dinnerGuests = [];
@@ -957,12 +966,16 @@ document.getElementById('reset-bill').addEventListener('click', () => {
     tabContents.forEach(panel => panel.classList.toggle('active', panel.id === 'current-bill'));
     goToStep(0);
     window.scrollTo({top: 0, behavior: 'instant'});
-});
+}
+document.getElementById('reset-bill').addEventListener('click', startNewBill);
 goToStep(0);
 
 
 function renderResultsDetails() {
-    const total = Number(totalPaidInput.value) || 0;
+    const photo = uploadedFile && receiptImage.src ? `<details class="result-receipt"><summary>View original receipt photo</summary><img src="${escapeAttribute(receiptImage.src)}" alt="Original dinner receipt"></details>` : '';
+    renderBillDetails(items, Number(totalPaidInput.value) || 0, dinnerGuests, receiptSummary, billNameInput.value, document.getElementById('results-details'), photo);
+}
+function renderBillDetails(items, total, dinnerGuests, receiptSummary, billName, target, receiptPhoto = '') {
     const subtotal = items.reduce((sum, item) => sum + item.price, 0);
     const money = value => '$' + value.toFixed(2);
     const guests = [...new Set([...dinnerGuests, ...items.flatMap(item => item.people || [])])];
@@ -970,9 +983,8 @@ function renderResultsDetails() {
     const summaryFields = [['Items subtotal', subtotal], ['Tax, tip & other adjustments', total - subtotal], ['Total paid', total]];
     const detected = receiptSummary ? ['subtotal', 'tax', 'tip', 'total'].filter(key => Number.isFinite(receiptSummary[key])).map(key =>
         `<div><dt>Receipt ${key}</dt><dd>${money(receiptSummary[key])}</dd></div>`).join('') : '';
-    const receiptPhoto = uploadedFile && receiptImage.src ? `<details class="result-receipt"><summary>View original receipt photo</summary><img src="${escapeAttribute(receiptImage.src)}" alt="Original dinner receipt"></details>` : '';
-    document.getElementById('results-details').innerHTML = `
-        <section class="result-overview"><h2>${escapeHtml(billNameInput.value.trim() || 'Dinner summary')}</h2>
+    target.innerHTML = `
+        <section class="result-overview"><h2>${escapeHtml(billName.trim() || 'Dinner summary')}</h2>
             <p class="helper">${guests.length} people · ${items.length} items</p>
             <p class="result-guests">${guests.map(escapeHtml).join(', ')}</p>
             <dl class="result-totals">${summaryFields.map(([label, value]) => `<div><dt>${label}</dt><dd>${money(value)}</dd></div>`).join('')}</dl>
@@ -995,10 +1007,26 @@ function renderResultsDetails() {
 }
 billNameInput.addEventListener('input', () => { if (currentStep === 4) renderResultsDetails(); });
 
-document.getElementById('get-started').addEventListener('click', () => {
-    document.getElementById('landing-page').classList.remove('active');
-    document.getElementById('current-bill').classList.add('active');
-    tabButtons.forEach(button => button.classList.toggle('active', button.dataset.tab === 'current'));
-    goToStep(0);
-    window.scrollTo({top: 0, behavior: 'instant'});
+function showSavedHome() {
+    tabButtons.forEach(button => button.classList.toggle('active', button.dataset.tab === 'saved'));
+    tabContents.forEach(panel => panel.classList.toggle('active', panel.id === 'saved-bills'));
+    displaySavedBills();
+}
+document.getElementById('new-bill').addEventListener('click', () => {
+    if ((items.length || dinnerGuests.length || guestNameInput.value.trim()) && !confirm('Start a new bill and clear the current dinner? Saved bills will stay.')) return;
+    startNewBill();
 });
+document.getElementById('home-link').addEventListener('click', event => { event.preventDefault(); showSavedHome(); });
+document.getElementById('close-saved-dialog').addEventListener('click', () => document.getElementById('saved-bill-dialog').close());
+showSavedHome();
+
+// Both entry methods feed the same bill; switching preserves unfinished work.
+function selectItemEntry(mode) {
+    ['scan', 'manual'].forEach(option => {
+        document.getElementById(option + '-entry').hidden = option !== mode;
+        document.getElementById('choose-' + option).setAttribute('aria-expanded', String(option === mode));
+    });
+    if (mode === 'manual') document.getElementById('item-price').focus();
+}
+document.getElementById('choose-scan').addEventListener('click', () => selectItemEntry('scan'));
+document.getElementById('choose-manual').addEventListener('click', () => selectItemEntry('manual'));

@@ -5,14 +5,14 @@ const elements = new Map();
 const storage = new Map();
 function element(id) {
   if (!elements.has(id)) elements.set(id, {value:'',style:{},dataset:{},disabled:false,innerHTML:'',textContent:'', listeners:{},
-    addEventListener(type, fn){this.listeners[type]=fn;}, querySelectorAll(){return [];}, classList:{add(){},remove(){}},
-    focus(){}, replaceChildren(){this.innerHTML='';}, removeAttribute(){}, appendChild(){},set textContent(value){this._text = value;},get textContent(){return this._text || '';}});
+    addEventListener(type, fn){this.listeners[type]=fn;}, querySelectorAll(){return [];}, classList:{add(){},remove(){},toggle(){}},
+    setAttribute(name,value){this[name]=value;}, showModal(){this.open=true;},close(){this.open=false;},focus(){}, replaceChildren(){this.innerHTML='';}, removeAttribute(){}, appendChild(){},set textContent(value){this._text = value;},get textContent(){return this._text || '';}});
   return elements.get(id);
 }
 const document = {getElementById:element,querySelectorAll:()=>[],createElement:()=>{
   const div={};Object.defineProperty(div,'textContent',{set(value){div.innerHTML=String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');}});return div;
 }};
-const context = vm.createContext({document, window:{scrollTo(){}}, console, fetch:async()=>({ok:true,json:async()=>({smartScan:false})}),setTimeout,clearTimeout,AbortController,confirm:()=>true,alert:()=>{},localStorage:{getItem:key=>storage.get(key) || null,setItem:(key,value)=>storage.set(key,value)},Set,Date,Math});
+const context = vm.createContext({crypto:require("node:crypto").webcrypto,document, window:{scrollTo(){}}, console, fetch:async()=>({ok:true,json:async()=>({smartScan:false})}),setTimeout,clearTimeout,AbortController,confirm:()=>true,alert:()=>{},localStorage:{getItem:key=>storage.get(key) || null,setItem:(key,value)=>storage.set(key,value)},Set,Date,Math});
 vm.runInContext(fs.readFileSync('script.js','utf8'),context);
 const run = code => vm.runInContext(code,context);
 // A short receipt must not be duplicated; identical real purchases stay separate.
@@ -76,17 +76,64 @@ assert.equal(run('items.length'),0);
 assert.equal(run('dinnerGuests.length'),0);
 assert.equal(element('total-paid').value,'');
 assert.equal(storage.get('savedBills'),savedBeforeReset);
+run("items = [{id:123,name:'Unsaved soup',price:9,people:['Casey']}]; dinnerGuests=['Casey']; parsedItems=[{name:'Pending scan',price:3}];");
+element('bill-name').value = 'Draft dinner';
 run(`loadBill(${JSON.parse(savedBeforeReset)[0].id})`);
-assert.equal(run('currentStep'),4);
-assert.equal(run('dinnerGuests.length'),2);
-assert.equal(run('items[0].name'),'Pasta');
-assert.match(element('results-details').innerHTML,/All receipt items/);
-assert.match(element('results-details').innerHTML,/Pasta/);
-assert.match(element('results-details').innerHTML,/Before adjustments/);
-assert.match(element('results-details').innerHTML,/No items assigned/);
-assert.match(element('results-container').innerHTML,/Bruce/);
-assert.match(element('results-container').innerHTML,/\$0\.00/);
+assert.equal(run('currentStep'),0);
+assert.equal(run('items[0].name'),'Unsaved soup');
+assert.equal(run('dinnerGuests[0]'),'Casey');
+assert.equal(run('parsedItems[0].name'),'Pending scan');
+assert.equal(element('bill-name').value,'Draft dinner');
+assert.equal(element('saved-bill-dialog').open,true);
+assert.match(element('saved-dialog-details').innerHTML,/All receipt items/);
+assert.match(element('saved-dialog-details').innerHTML,/Pasta/);
+assert.match(element('saved-dialog-details').innerHTML,/Before adjustments/);
+assert.match(element('saved-dialog-summary').innerHTML,/Bruce/);
+assert.match(element('saved-dialog-summary').innerHTML,/\$0\.00/);
+assert.match(element('saved-dialog-summary').innerHTML,/\$24\.00/);
+assert.equal(storage.get('savedBills'),savedBeforeReset);
+element('close-saved-dialog').listeners.click();
+assert.equal(element('saved-bill-dialog').open,false);
 console.log('Guided flow checks passed: validation, backtracking, save/load, and reset preserving saved bills.');
+
+// Saved contacts survive reset and reload; editing never rewrites bill snapshots.
+element('remember-person').checked = true;
+element('guest-name').value = 'Casey, casey';
+run('addGuests()');
+assert.equal(run('savedPeople.length'), 1);
+const contactId = run('savedPeople[0].id');
+assert.equal(run('readSavedPeople()[0].id'), contactId);
+run(`renameSavedPerson(${JSON.stringify(contactId)}, 'Casey Jones')`);
+assert.equal(run('savedPeople[0].id'), contactId);
+assert.ok(run("dinnerGuests.includes('Casey')"));
+assert.equal(storage.get('savedBills'), savedBeforeReset);
+element('reset-bill').listeners.click();
+assert.equal(run('savedPeople.length'), 1);
+run(`addSavedPerson(${JSON.stringify(contactId)}); addSavedPerson(${JSON.stringify(contactId)})`);
+assert.equal(run('dinnerGuests.length'), 1);
+assert.equal(run('dinnerGuests[0]'), 'Casey Jones');
+run(`removeSavedPerson(${JSON.stringify(contactId)})`);
+assert.equal(run('savedPeople.length'), 0);
+assert.equal(run('dinnerGuests[0]'), 'Casey Jones');
+element('remember-person').checked = false;
+element('guest-name').value = 'One-time guest';
+run('addGuests()');
+assert.equal(run('savedPeople.length'), 0);
+storage.set('savedPeople', 'invalid JSON');
+assert.equal(run('readSavedPeople().length'), 0);
+console.log('Saved people checks passed: persistence, identity, duplicate prevention, opt-out, and historical names.');
+
+// Switching entry methods preserves both manual and receipt drafts.
+element('item-name').value = 'unfinished pasta';
+run("parsedItems = [{name:'Soup',price:12}]; selectItemEntry('scan');");
+assert.equal(element('scan-entry').hidden, false);
+assert.equal(element('manual-entry').hidden, true);
+run("selectItemEntry('manual');");
+assert.equal(element('scan-entry').hidden, true);
+assert.equal(element('manual-entry').hidden, false);
+assert.equal(element('item-name').value, 'unfinished pasta');
+assert.equal(run('parsedItems.length'), 1);
+console.log('Entry card checks passed: switching preserves unfinished work.');
 
 // Free scan still populates the review and detected receipt totals.
 (async () => {
