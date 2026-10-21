@@ -32,39 +32,12 @@ const addAllParsedBtn = document.getElementById('add-all-parsed-btn');
 const clearParsedBtn = document.getElementById('clear-parsed-btn');
 
 // Tab elements
-const tabButtons = document.querySelectorAll('.tab-btn');
 const tabContents = document.querySelectorAll('.tab-content');
 
 // Event listeners
 addItemBtn.addEventListener('click', addItem);
 totalPaidInput.addEventListener('input', calculateResults);
 saveBillBtn.addEventListener('click', saveBill);
-
-// Tab switching
-tabButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-        const targetTab = btn.dataset.tab;
-
-        // Update active tab button
-        tabButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        // Update active tab content
-        tabContents.forEach(content => {
-            content.classList.remove('active');
-            if (targetTab === 'current' && content.id === 'current-bill') {
-                content.classList.add('active');
-            } else if (targetTab === 'saved' && content.id === 'saved-bills') {
-                content.classList.add('active');
-            }
-        });
-
-        // Refresh saved bills list when switching to saved tab
-        if (targetTab === 'saved') {
-            displaySavedBills();
-        }
-    });
-});
 
 // Allow Enter key to add item
 itemPriceInput.addEventListener('keypress', (e) => {
@@ -802,6 +775,7 @@ function escapeHtml(text) {
 
 // Dinner setup and navigation are separate from the original splitting calculation.
 let dinnerGuests = [];
+let currentBillStarted = false;
 // Contacts have stable identities; dinner names remain historical snapshots.
 let savedPeople = readSavedPeople();
 function readSavedPeople() {
@@ -944,6 +918,7 @@ function nextStep() {
 document.querySelectorAll('[data-next]').forEach(button => button.addEventListener('click', nextStep));
 document.querySelectorAll('[data-back]').forEach(button => button.addEventListener('click', () => goToStep(Math.max(0, currentStep - 1))));
 function startNewBill() {
+    currentBillStarted = true;
     selectItemEntry(null);
     items = [];
     people = new Set();
@@ -962,7 +937,6 @@ function startNewBill() {
     document.getElementById('review-summary').replaceChildren();
     document.getElementById('review-status').textContent = '';
     useReceiptTotalBtn.hidden = true;
-    tabButtons.forEach(button => button.classList.toggle('active', button.dataset.tab === 'current'));
     tabContents.forEach(panel => panel.classList.toggle('active', panel.id === 'current-bill'));
     goToStep(0);
     window.scrollTo({top: 0, behavior: 'instant'});
@@ -1008,12 +982,17 @@ function renderBillDetails(items, total, dinnerGuests, receiptSummary, billName,
 billNameInput.addEventListener('input', () => { if (currentStep === 4) renderResultsDetails(); });
 
 function showSavedHome() {
-    tabButtons.forEach(button => button.classList.toggle('active', button.dataset.tab === 'saved'));
     tabContents.forEach(panel => panel.classList.toggle('active', panel.id === 'saved-bills'));
+    document.getElementById('continue-bill').hidden = !currentBillStarted;
     displaySavedBills();
+    window.scrollTo({top: 0, behavior: 'instant'});
 }
+document.getElementById('continue-bill').addEventListener('click', () => {
+    tabContents.forEach(panel => panel.classList.toggle('active', panel.id === 'current-bill'));
+    window.scrollTo({top: 0, behavior: 'instant'});
+});
 document.getElementById('new-bill').addEventListener('click', () => {
-    if ((items.length || dinnerGuests.length || guestNameInput.value.trim()) && !confirm('Start a new bill and clear the current dinner? Saved bills will stay.')) return;
+    if ((items.length || dinnerGuests.length || parsedItems.length || uploadedFile || [guestNameInput, itemPriceInput, billNameInput, totalPaidInput, document.getElementById('item-name')].some(input => input.value.trim())) && !confirm('Start a new bill and clear the current dinner? Saved bills will stay.')) return;
     startNewBill();
 });
 document.getElementById('home-link').addEventListener('click', event => { event.preventDefault(); showSavedHome(); });

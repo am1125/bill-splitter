@@ -10,17 +10,13 @@
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=2">
     <title>dinner bill splitter</title>
-    <link rel="stylesheet" href="style.css?v=27">
+    <link rel="stylesheet" href="style.css?v=28">
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
 </head>
 <body>
 <div class="container">
     <header class="app-header">
         <a id="home-link" class="brand" href="./" aria-label="Bill Splitter home"><img src="icons/icon-192.png?v=2" width="48" height="48" alt=""></a>
-        <nav class="tabs" aria-label="Bills">
-            <button class="tab-btn" data-tab="current"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v18l-2.5-2-2.5 2-2.5-2L7 21V3Z"/><path d="M10 8h4m-4 4h4"/></svg><span>Current Bill</span></button>
-            <button class="tab-btn" data-tab="saved"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4V4Z"/></svg><span>Saved Bills</span></button>
-        </nav>
     </header>
     <div class="tab-content" id="current-bill">
         <nav class="flow-progress" aria-label="Dinner steps"><span data-progress="0">1. People</span><span data-progress="1">2. Items</span><span data-progress="2">3. Assign</span><span data-progress="3">4. Total</span><span data-progress="4">5. Results</span></nav>
@@ -106,7 +102,7 @@
             <div class="flow-actions"><button type="button" class="btn btn-secondary" data-back>← Edit total</button><button type="button" class="btn btn-secondary" id="reset-bill">Start over / clear bill</button></div>
         </section>
     </div>
-    <div class="tab-content active" id="saved-bills"><div class="page-heading saved-home-heading"><div><h1>bill calculator</h1><p class="subtitle">your dinners, all in one place.</p></div><button type="button" id="new-bill" class="btn btn-primary">+ new bill</button></div><div class="saved-bills-container"><div id="saved-bills-list"><p class="placeholder">No saved bills yet</p></div></div></div>
+    <div class="tab-content active" id="saved-bills"><div class="page-heading saved-home-heading"><div><h1>bill calculator</h1><p class="subtitle">your dinners, all in one place.</p></div><div class="home-bill-actions"><button type="button" id="continue-bill" class="btn btn-primary" hidden>continue current bill →</button><button type="button" id="new-bill" class="btn btn-secondary">+ new bill</button></div></div><div class="saved-bills-container"><div id="saved-bills-list"><p class="placeholder">No saved bills yet</p></div></div></div>
 </div>
 <dialog id="saved-bill-dialog" aria-labelledby="saved-dialog-title">
     <div class="saved-dialog-header"><h1 id="saved-dialog-title"></h1><button type="button" id="close-saved-dialog" class="btn" aria-label="close saved bill" autofocus>×</button></div>
@@ -114,6 +110,6 @@
     <div id="saved-dialog-summary"></div>
     <details id="saved-dialog-record" class="full-bill-record"><summary>view full bill details</summary><div id="saved-dialog-details"></div></details>
 </dialog>
-<script src="script.js?v=13"></script>
+<script src="script.js?v=14"></script>
 </body>
 </html>
