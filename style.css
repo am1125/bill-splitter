@@ -136,11 +136,11 @@ input{scroll-margin-block:100px}button{touch-action:manipulation}
     body:has(input:focus) .tabs{display:none}
 }
 
-/* Shared visual language across People, Items, Assign, Total, and Results. */
+/* Shared open layout for the entry steps; results retain their card layout. */
 #current-bill{padding-top:24px}
 .flow-step{max-width:600px}
-.flow-step>h1,.flow-step .results-section h1{font-size:36px;line-height:1.15;letter-spacing:-1.3px;text-align:center;margin:0 0 18px;font-weight:600}
-.flow-step>.helper,.flow-step .results-section>.helper{text-align:center;line-height:1.6;max-width:440px;margin:0 auto 32px}
+.flow-step>h1{font-size:36px;line-height:1.15;letter-spacing:-1.3px;text-align:center;margin:0 0 18px;font-weight:600}
+.flow-step>.helper{text-align:center;line-height:1.6;max-width:440px;margin:0 auto 32px}
 .flow-step .form-group input{background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;box-shadow:none;padding:12px 0;font-size:22px;min-height:52px;color:var(--ink)}
 .flow-step .form-group label{font-size:13px;color:var(--muted);font-weight:400}
 .flow-step .btn-primary{background:var(--sage);color:var(--ink);font-weight:500;border-radius:16px;min-height:52px}
@@ -178,16 +178,6 @@ input{scroll-margin-block:100px}button{touch-action:manipulation}
 .flow-step .currency-field input{font-size:56px;text-align:center;min-height:80px;border:0;letter-spacing:-2px;padding:8px 0}
 #bill-subtotal{text-align:center;margin-bottom:18px}
 #use-receipt-total{display:block;margin:0 auto}
-.flow-step .person-result{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;background:transparent;border:0;border-radius:0;border-bottom:1px solid var(--line);padding:26px 0;margin:0}
-.flow-step .person-name{justify-content:center;font-size:26px;letter-spacing:-.6px}
-.flow-step .person-name::before{display:none}
-.flow-step .person-amount{font-size:40px;letter-spacing:-1.3px}
-.flow-step .total-summary{border-radius:0;background:transparent;padding:24px 0;margin:0;border-bottom:1px solid var(--line)}
-.flow-step .total-summary .amount{font-size:28px}
-.flow-step .result-person{background:transparent;border:0;border-top:1px solid var(--line);border-radius:0;padding:22px 0}
-.flow-step .result-person h3{text-align:center;font-size:24px;letter-spacing:-.5px;font-weight:500}
-#results-details section>h2{text-align:center;font-size:20px}
-.result-overview>.helper,.result-guests{text-align:center}
 .bill-name-section{margin-top:32px;text-align:center}
 .bill-name-section input{text-align:center;width:100%}
 .flow-step .storage-note{font-size:12px}
@@ -195,19 +185,19 @@ input{scroll-margin-block:100px}button{touch-action:manipulation}
     #current-bill{padding-top:0}
     #current-bill>.mobile-step-label{margin:40px 0 44px}
     .flow-step{max-width:100%;min-height:calc(100svh - 220px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
-    .flow-step>.helper,.flow-step .results-section>.helper{font-size:14px}
+    .flow-step>.helper{font-size:14px}
     .flow-step .form-group input{font-size:22px!important;padding:12px 0}
     .guest-entry .form-group input{font-size:30px!important;padding:10px 0}
     .flow-step .guest-entry .form-group input{border:0}
     .flow-step .item-fields{gap:18px}
     .flow-step .item-fields input{font-size:24px!important}
     .flow-step .review-fields{grid-template-columns:1fr 1fr;gap:18px}
-    .flow-step .person-result{flex-direction:column;gap:8px}
     .flow-step .flow-actions{display:flex;padding-bottom:0}
     .flow-step .flow-actions .btn{min-height:56px;padding:16px 20px}
     .flow-step .currency-field input{font-size:56px}
 }
 .flow-step .guest-entry .form-group input{border:0}
-.flow-step .results-section>.section-header{display:block}
 .flow-step .currency-field input{width:6ch;max-width:calc(100% - 40px);flex:none;appearance:textfield}
 .flow-step .currency-field input::-webkit-inner-spin-button,.flow-step .currency-field input::-webkit-outer-spin-button{appearance:none;margin:0}
+
+.flow-step[data-step="4"]{max-width:680px}
