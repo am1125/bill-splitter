@@ -10,13 +10,17 @@
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=2">
     <title>dinner bill splitter</title>
-    <link rel="stylesheet" href="style.css?v=28">
+    <link rel="stylesheet" href="style.css?v=34">
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
 </head>
 <body>
 <div class="container">
     <header class="app-header">
         <a id="home-link" class="brand" href="./" aria-label="Bill Splitter home"><img src="icons/icon-192.png?v=2" width="48" height="48" alt=""></a>
+        <nav class="tabs" aria-label="bill navigation">
+            <button type="button" id="home-tab" class="tab-btn active" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v11h-7v-7h-4v7H3Z"/></svg><span>home</span></button>
+            <button type="button" id="add-bill-tab" class="tab-btn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v18l-2.5-2-2.5 2-2.5-2L7 21V3Z"/><path d="M12 7v8m-4-4h8"/></svg><span>add bill</span></button>
+        </nav>
     </header>
     <div class="tab-content" id="current-bill">
         <nav class="flow-progress" aria-label="Dinner steps"><span data-progress="0">1. People</span><span data-progress="1">2. Items</span><span data-progress="2">3. Assign</span><span data-progress="3">4. Total</span><span data-progress="4">5. Results</span></nav>
@@ -107,9 +111,10 @@
 <dialog id="saved-bill-dialog" aria-labelledby="saved-dialog-title">
     <div class="saved-dialog-header"><h1 id="saved-dialog-title"></h1><button type="button" id="close-saved-dialog" class="btn" aria-label="close saved bill" autofocus>×</button></div>
     <h2>everyone’s share</h2><p class="helper">tax and tip are included in each share.</p>
+    <button type="button" id="load-saved-bill" class="btn btn-primary">load bill →</button>
     <div id="saved-dialog-summary"></div>
     <details id="saved-dialog-record" class="full-bill-record"><summary>view full bill details</summary><div id="saved-dialog-details"></div></details>
 </dialog>
-<script src="script.js?v=14"></script>
+<script src="script.js?v=17"></script>
 </body>
 </html>

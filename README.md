@@ -56,6 +56,6 @@ For this workspace's isolated runtime, use `.local-receipts/Ollama.app/Contents/
 
 ## Saved bills home
 
-The app opens to saved bills. Choose **new bill** to start a dinner. **View bill** opens a read-only results dialog with each person’s share and full bill details, without changing your current dinner or receipt draft. Close the dialog or press Escape to return. Saving a bill returns to this home screen.
+The app opens to saved bills. Choose **new bill** to start a dinner. **View bill** opens a results dialog with each person’s share and full bill details, without changing your current dinner or receipt draft. Choose **load bill** in the dialog to reopen it for editing; confirm before replacing a current dinner. Close the dialog or press Escape to return. Saving a bill returns to this home screen.
 
-Use the division-sign home icon to return to the bill list. During a dinner, **continue current bill** returns to the same step with your draft intact. The current draft is held in memory and does not survive refreshing the page.
+Use the home tab or division-sign icon to return to the bill list. The add bill tab opens the current dinner, or starts one if none exists. During a dinner, **continue current bill** returns to the same step with your draft intact. The current draft is held in memory and does not survive refreshing the page.

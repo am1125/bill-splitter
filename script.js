@@ -492,12 +492,36 @@ function loadBill(id) {
     if (!bill) return;
     const savedItems = bill.items.map(item => ({...item, people: item.people || (item.person ? [item.person] : [])}));
     const guests = [...new Set([...(bill.participants || []), ...savedItems.flatMap(item => item.people)])];
+    document.getElementById('load-saved-bill').dataset.id = String(bill.id);
     document.getElementById('saved-dialog-title').textContent = bill.name;
     document.getElementById('saved-dialog-summary').innerHTML = renderBillSummary(savedItems, bill.totalPaid || 0, guests);
     renderBillDetails(savedItems, bill.totalPaid || 0, guests, bill.receiptSummary || null, bill.name, document.getElementById('saved-dialog-details'), '');
     document.getElementById('saved-dialog-record').open = false;
     document.getElementById('saved-bill-dialog').showModal();
 }
+
+function hasCurrentDinnerContent() {
+    return items.length || dinnerGuests.length || parsedItems.length || uploadedFile ||
+        [guestNameInput, itemPriceInput, billNameInput, totalPaidInput, document.getElementById('item-name')].some(input => input.value.trim());
+}
+function loadSavedBillForEditing(id) {
+    const bill = getSavedBills().find(bill => bill.id === id);
+    if (!bill) return;
+    if (hasCurrentDinnerContent() && !confirm('Load this bill and replace the current dinner? Saved bills will stay.')) return;
+    document.getElementById('saved-bill-dialog').close();
+    startNewBill();
+    items = bill.items.map(item => ({...item, people: [...(item.people || (item.person ? [item.person] : []))]}));
+    dinnerGuests = [...new Set([...(bill.participants || []), ...items.flatMap(item => item.people)])];
+    people = new Set(items.flatMap(item => item.people));
+    billNameInput.value = bill.name;
+    totalPaidInput.value = bill.totalPaid || '';
+    receiptSummary = bill.receiptSummary || null;
+    renderGuests();
+    goToStep(4);
+}
+document.getElementById('load-saved-bill').addEventListener('click', () => {
+    loadSavedBillForEditing(Number(document.getElementById('load-saved-bill').dataset.id));
+});
 
 // Delete a saved bill
 function deleteBill(id) {
@@ -868,10 +892,19 @@ document.getElementById('add-guest').addEventListener('click', addGuests);
 guestNameInput.addEventListener('keydown', event => {
     if (event.key === 'Enter') { event.preventDefault(); addGuests(); }
 });
+function selectAllGuests(index) {
+    if (!items[index]) return;
+    items[index].people = [...dinnerGuests];
+    document.querySelectorAll('[data-person]').forEach(input => {
+        if (Number(input.dataset.item) === index) input.checked = true;
+    });
+    clearFlowError();
+}
 function renderAssignments() {
     document.getElementById('assignment-list').innerHTML = items.map((item, index) =>
         `<fieldset class="assignment-item"><legend>${escapeHtml(item.name || `Item ${index + 1}`)} · $${item.price.toFixed(2)}</legend><div class="assignment-choices">${dinnerGuests.map((name, personIndex) =>
-            `<label><input type="checkbox" data-item="${index}" data-person="${personIndex}" ${(item.people || []).includes(name) ? 'checked' : ''}>${escapeHtml(name)}</label>`).join('')}</div></fieldset>`).join('');
+            `<label><input type="checkbox" data-item="${index}" data-person="${personIndex}" ${(item.people || []).includes(name) ? 'checked' : ''}>${escapeHtml(name)}</label>`).join('')}</div><button type="button" class="select-all-guests" data-select-all="${index}" aria-label="Select everyone for ${escapeAttribute(item.name || `Item ${index + 1}`)}">select all</button></fieldset>`).join('');
+    document.querySelectorAll('[data-select-all]').forEach(button => button.addEventListener('click', () => selectAllGuests(Number(button.dataset.selectAll))));
     document.querySelectorAll('[data-person]').forEach(input => input.addEventListener('change', () => {
         const item = items[Number(input.dataset.item)];
         const name = dinnerGuests[Number(input.dataset.person)];
@@ -937,7 +970,7 @@ function startNewBill() {
     document.getElementById('review-summary').replaceChildren();
     document.getElementById('review-status').textContent = '';
     useReceiptTotalBtn.hidden = true;
-    tabContents.forEach(panel => panel.classList.toggle('active', panel.id === 'current-bill'));
+    showBillScreen('current-bill');
     goToStep(0);
     window.scrollTo({top: 0, behavior: 'instant'});
 }
@@ -981,19 +1014,33 @@ function renderBillDetails(items, total, dinnerGuests, receiptSummary, billName,
 }
 billNameInput.addEventListener('input', () => { if (currentStep === 4) renderResultsDetails(); });
 
+function showBillScreen(id) {
+    tabContents.forEach(panel => panel.classList.toggle('active', panel.id === id));
+    [['home-tab', 'saved-bills'], ['add-bill-tab', 'current-bill']].forEach(([tabId, panelId]) => {
+        const tab = document.getElementById(tabId);
+        tab.classList.toggle('active', panelId === id);
+        if (panelId === id) tab.setAttribute('aria-current', 'page');
+        else tab.removeAttribute('aria-current');
+    });
+}
 function showSavedHome() {
-    tabContents.forEach(panel => panel.classList.toggle('active', panel.id === 'saved-bills'));
+    showBillScreen('saved-bills');
     document.getElementById('continue-bill').hidden = !currentBillStarted;
     displaySavedBills();
     window.scrollTo({top: 0, behavior: 'instant'});
 }
 document.getElementById('continue-bill').addEventListener('click', () => {
-    tabContents.forEach(panel => panel.classList.toggle('active', panel.id === 'current-bill'));
+    showBillScreen('current-bill');
     window.scrollTo({top: 0, behavior: 'instant'});
 });
 document.getElementById('new-bill').addEventListener('click', () => {
-    if ((items.length || dinnerGuests.length || parsedItems.length || uploadedFile || [guestNameInput, itemPriceInput, billNameInput, totalPaidInput, document.getElementById('item-name')].some(input => input.value.trim())) && !confirm('Start a new bill and clear the current dinner? Saved bills will stay.')) return;
+    if (hasCurrentDinnerContent() && !confirm('Start a new bill and clear the current dinner? Saved bills will stay.')) return;
     startNewBill();
+});
+document.getElementById('home-tab').addEventListener('click', showSavedHome);
+document.getElementById('add-bill-tab').addEventListener('click', () => {
+    if (!currentBillStarted) startNewBill();
+    else { showBillScreen('current-bill'); window.scrollTo({top: 0, behavior: 'instant'}); }
 });
 document.getElementById('home-link').addEventListener('click', event => { event.preventDefault(); showSavedHome(); });
 document.getElementById('close-saved-dialog').addEventListener('click', () => document.getElementById('saved-bill-dialog').close());

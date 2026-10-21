@@ -96,6 +96,21 @@ element('close-saved-dialog').listeners.click();
 assert.equal(element('saved-bill-dialog').open,false);
 console.log('Guided flow checks passed: validation, backtracking, save/load, and reset preserving saved bills.');
 
+// Loading is an explicit action and cancellation preserves the active dinner.
+context.confirm = () => false;
+run(`loadSavedBillForEditing(${JSON.parse(savedBeforeReset)[0].id})`);
+assert.equal(run('items[0].name'),'Unsaved soup');
+context.confirm = () => true;
+run(`loadSavedBillForEditing(${JSON.parse(savedBeforeReset)[0].id})`);
+assert.equal(run('currentStep'),4);
+assert.equal(run('items[0].name'),'Pasta');
+assert.equal(run('parsedItems.length'),0);
+assert.equal(run('uploadedFile'),null);
+assert.equal(element('bill-name').value,'Flow test dinner');
+assert.equal(element('total-paid').value,24);
+assert.equal(storage.get('savedBills'),savedBeforeReset);
+assert.match(element('results-container').innerHTML,/\$24\.00/);
+
 // Saved contacts survive reset and reload; editing never rewrites bill snapshots.
 element('remember-person').checked = true;
 element('guest-name').value = 'Casey, casey';
@@ -134,6 +149,14 @@ assert.equal(element('manual-entry').hidden, false);
 assert.equal(element('item-name').value, 'unfinished pasta');
 assert.equal(run('parsedItems.length'), 1);
 console.log('Entry card checks passed: switching preserves unfinished work.');
+
+// Select all assigns only the chosen item, with no shared mutable guest array.
+run("dinnerGuests=['Aaron','Bruce']; items=[{name:'Shared',price:12,people:['Aaron']},{name:'Solo',price:5,people:['Bruce']}]; selectAllGuests(0); selectAllGuests(0);");
+assert.equal(run('items[0].people.length'),2);
+assert.equal(run("items[1].people.join(',')"),'Bruce');
+run('items[0].people.pop();');
+assert.equal(run('dinnerGuests.length'),2);
+console.log('Select all checks passed: scoped assignment and independent guest lists.');
 
 // Free scan still populates the review and detected receipt totals.
 (async () => {
