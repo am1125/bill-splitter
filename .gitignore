@@ -17,3 +17,9 @@ Thumbs.db
 # Logs
 *.log
 
+
+# Local credentials and Python cache
+.env
+.env.*
+!.env.example
+__pycache__/

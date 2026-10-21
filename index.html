@@ -4,103 +4,101 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dinner Bill Splitter</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=14">
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Bill Splitter</h1>
-            <p class="subtitle">Calculate what everyone owes when you pay</p>
-        </header>
-
-        <div class="tabs">
-            <button class="tab-btn active" data-tab="current">Current Bill</button>
-            <button class="tab-btn" data-tab="saved">Saved Bills</button>
+<div class="container">
+    <header class="app-header">
+        <a class="brand" href="./" aria-label="Bill Splitter home">split<span aria-hidden="true">✳</span></a>
+        <nav class="tabs" aria-label="Bills">
+            <button class="tab-btn" data-tab="current">Current bill</button>
+            <button class="tab-btn" data-tab="saved">Saved bills</button>
+        </nav>
+    </header>
+    <section class="tab-content active landing-page" id="landing-page" aria-labelledby="landing-title">
+        <div class="landing-hero">
+            <h1 id="landing-title">Bill Splitter</h1>
+            <p class="landing-description">Split a bill by what each person ordered.</p>
+            <button type="button" id="get-started" class="btn btn-primary">Get started <span aria-hidden="true">→</span></button>
         </div>
-
-        <div class="tab-content active" id="current-bill">
-            <div class="main-content">
-            <div class="left-section">
-                <div class="form-group">
-                    <label for="bill-name">Bill Name</label>
-                    <input type="text" id="bill-name" placeholder="Enter bill name">
-                </div>
-                <div class="form-group">
-                    <label for="total-paid">Total Amount Paid (after tax & tip)</label>
-                    <input type="number" id="total-paid" step="0.01" min="0" placeholder="0.00">
-                </div>
+        <ol class="landing-how">
+            <li><span class="landing-number">1</span><div><h2>Add names</h2><p>Enter everyone’s name.</p></div></li>
+            <li><span class="landing-number">2</span><div><h2>Add the receipt</h2><p>Scan a photo or enter items yourself.</p></div></li>
+            <li><span class="landing-number">3</span><div><h2>Calculate shares</h2><p>Assign items, enter the total, see the split.</p></div></li>
+        </ol>
+    </section>
+    <div class="tab-content" id="current-bill">
+        <div class="page-heading">
+            <label class="sr-only" for="bill-name">Bill name</label>
+            <input type="text" id="bill-name" placeholder="Name your dinner" autocomplete="off">
+            <p class="subtitle">Add names, items, and the total paid.</p>
+        </div>
+        <nav class="flow-progress" aria-label="Dinner steps"><span data-progress="0">1. People</span><span data-progress="1">2. Items</span><span data-progress="2">3. Assign</span><span data-progress="3">4. Total</span><span data-progress="4">5. Results</span></nav>
+        <p id="flow-error" class="flow-error" role="alert" hidden></p>
+        <section class="flow-step" data-step="0">
+            <h1 tabindex="-1">Who’s at dinner?</h1><p class="helper">Add everyone before you start splitting.</p>
+            <div class="guest-entry"><div class="form-group"><label for="guest-name">Name</label><input id="guest-name" placeholder="e.g. Aaron" autocomplete="off"></div><button id="add-guest" class="btn btn-primary" type="button">+ Add person</button></div>
+            <div id="guest-list" class="guest-list"></div>
+            <div class="flow-actions"><button type="button" class="btn btn-primary" data-next>Next: Receipt & Items →</button></div>
+        </section>
+        <section class="flow-step" data-step="1" hidden>
+            <h1 tabindex="-1">What was on the table?</h1><p class="helper">Upload and scan your receipt, enter everything manually, or combine both.</p>
                 <div class="receipt-upload-form">
-                    <h2>Upload Receipt Photo</h2>
-                    <div class="form-group">
-                        <label for="receipt-upload">Upload Receipt</label>
-                        <input type="file" id="receipt-upload" accept="image/png,image/jpeg,image/jpg,image/bmp,image/webp,image/gif" style="display: none;">
-                        <button type="button" id="upload-receipt-btn" class="btn btn-primary">Choose Receipt Photo</button>
-                        <div id="receipt-preview" style="margin-top: 10px; display: none;">
-                            <img id="receipt-image" style="max-width: 100%; max-height: 200px; border: 1px solid #ccc;">
-                            <div style="margin-top: 10px;">
-                                <button type="button" id="parse-receipt-btn" class="btn btn-primary">Parse Receipt</button>
-                                <button type="button" id="cancel-upload-btn" class="btn btn-danger" style="margin-left: 10px;">Cancel</button>
-                            </div>
-                            <div id="parsing-status" style="margin-top: 10px; font-size: 0.85rem; opacity: 0.7;"></div>
-                        </div>
+                    <input type="file" id="receipt-upload" accept="image/png,image/jpeg,image/jpg,image/bmp,image/webp,image/gif" hidden>
+                    <button type="button" id="upload-receipt-btn" class="btn btn-secondary"><span aria-hidden="true">↑</span> Upload receipt</button>
+                    <p id="scan-service-note" class="helper scan-note">Free receipt scanning runs on your device. Your receipt photo stays in your browser.</p>
+                    <div id="receipt-preview" style="display:none">
+                        <img id="receipt-image" alt="Uploaded receipt preview">
+                        <div class="actions"><button type="button" id="parse-receipt-btn" class="btn btn-primary">Scan receipt</button><button type="button" id="cancel-upload-btn" class="btn btn-secondary">Cancel</button></div>
+                        <div id="parsing-status" role="status"></div>
                     </div>
                 </div>
-                <div class="parsed-items-section" id="parsed-items-section" style="display: none; margin-top: 25px; padding-top: 25px; border-top: 1px solid rgba(0, 0, 0, 0.1);">
-                    <h2>Parsed Receipt Items</h2>
+                <section id="parsed-items-section" class="parsed-items-section" style="display:none">
+                    <h2>Review receipt items</h2><p class="helper">Check the items and prices. You’ll assign people in the next step.</p>
+                    <p class="helper">Line total is the full price for the quantity shown. Editing quantity does not multiply the price.</p>
+                    <div id="review-summary"></div>
+
                     <div id="parsed-items-container"></div>
-                    <div class="form-group" style="margin-top: 15px;">
-                        <button type="button" id="add-all-parsed-btn" class="btn btn-primary">Add All to Bill</button>
-                        <button type="button" id="clear-parsed-btn" class="btn btn-danger" style="margin-left: 10px;">Clear</button>
+                    <button type="button" id="review-add-item" class="btn btn-secondary">+ Add missing item</button>
+                    <p id="review-status" class="helper" role="status"></p>
+                    <div class="actions"><button type="button" id="add-all-parsed-btn" class="btn btn-primary">Add assigned items</button><button type="button" id="clear-parsed-btn" class="btn btn-secondary">Discard draft</button></div>
+                </section>
+                <div class="add-item-form">
+                    <h2>Add an item</h2>
+                    <div class="item-fields">
+                        <div class="form-group"><label for="item-price">Item price</label><input type="number" id="item-price" step="0.01" min="0" placeholder="0.00" required></div>
+                        <div class="form-group"><label for="item-name">Item name (optional)</label><input type="text" id="item-name" placeholder="e.g. Pasta"></div><input id="item-person" type="hidden">
                     </div>
+                    <div class="line"><p class="helper">Enter the full price for each item.</p><button type="button" id="add-item-btn" class="btn btn-primary">+ Add item</button></div>
                 </div>
-                <div class="add-item-form" style="margin-top: 25px; padding-top: 25px; border-top: 1px solid rgba(0, 0, 0, 0.1);">
-                    <h2>Add Receipt Item</h2>
-                    <div class="form-group">
-                        <label for="item-price">Item Price</label>
-                        <input type="number" id="item-price" step="0.01" min="0" placeholder="0.00" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="item-person">Person(s) - comma separated</label>
-                        <input type="text" id="item-person" placeholder="Enter name(s), e.g. Alice, Bob" required>
-                    </div>
-                    <div class="form-group">
-                        <button type="button" id="add-item-btn" class="btn btn-primary">+ Add Item</button>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <button type="button" id="save-bill-btn" class="btn btn-primary">Save Bill</button>
-                </div>
-            </div>
+                <section class="items-section"><div class="section-header"><h2>Receipt items</h2><span class="section-note">Before tax & tip</span></div><div id="items-container"></div></section>
 
-            <div class="right-section">
-                <div class="items-section">
-                    <h2>Receipt Items</h2>
-                    <div id="items-container">
-                        <!-- Items will be added here dynamically -->
-                    </div>
-                </div>
+            <div class="flow-actions"><button type="button" class="btn btn-secondary" data-back>← Back</button><button type="button" class="btn btn-primary" data-next>Next: Assign People →</button></div>
+        </section>
+        <section class="flow-step" data-step="2" hidden>
+            <h1 tabindex="-1">Who had what?</h1><p class="helper">Choose one or more people for every item. Shared items split equally.</p>
+            <div id="assignment-list"></div>
+            <div class="flow-actions"><button type="button" class="btn btn-secondary" data-back>← Back</button><button type="button" class="btn btn-primary" data-next>Next: Total Paid →</button></div>
+        </section>
+        <section class="flow-step" data-step="3" hidden>
+            <h1 tabindex="-1">How much did you pay?</h1><p class="helper">Enter the final amount, including tax and tip.</p>
+            <p id="bill-subtotal" class="helper"></p>
+            <div class="paid-section"><label for="total-paid">Total paid <span>Including tax & tip</span></label><div class="currency-field"><span aria-hidden="true">$</span><input type="number" id="total-paid" step="0.01" min="0" placeholder="0.00"></div></div>
+            <button type="button" id="use-receipt-total" class="btn btn-secondary" hidden>Use detected total paid</button>
+            <div class="flow-actions"><button type="button" class="btn btn-secondary" data-back>← Back</button><button type="button" class="btn btn-primary" data-next>See the split →</button></div>
+        </section>
+        <section class="flow-step" data-step="4" hidden>
+                <section class="results-section"><div class="section-header"><h2 tabindex="-1">Everyone’s share</h2></div><p class="helper">Tax and tip are included in each share.</p><div id="results-container" aria-live="polite"><p class="placeholder">Add items and enter total to see results</p></div></section>
+                <div id="results-details"></div>
+                <button type="button" id="save-bill-btn" class="btn btn-primary save-button">Save bill <span aria-hidden="true">→</span></button>
+                <p class="storage-note">Saved bills stay in this browser.</p>
 
-                <div class="results-section">
-                    <h2>Totals</h2>
-                    <div id="results-container">
-                        <p class="placeholder">Add items and enter total to see results</p>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-
-        <div class="tab-content" id="saved-bills">
-            <div class="saved-bills-container">
-                <div id="saved-bills-list">
-                    <p class="placeholder">No saved bills yet</p>
-                </div>
-            </div>
-        </div>
+            <div class="flow-actions"><button type="button" class="btn btn-secondary" data-back>← Edit total</button><button type="button" class="btn btn-secondary" id="reset-bill">Start over / clear bill</button></div>
+        </section>
     </div>
-
-    <script src="script.js"></script>
+    <div class="tab-content" id="saved-bills"><div class="page-heading"><h1>Saved bills</h1><p class="subtitle">View or load a saved bill.</p></div><div class="saved-bills-container"><div id="saved-bills-list"><p class="placeholder">No saved bills yet</p></div></div></div>
+</div>
+<script src="script.js?v=7"></script>
 </body>
 </html>
-

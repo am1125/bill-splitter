@@ -42,11 +42,11 @@ saveBillBtn.addEventListener('click', saveBill);
 tabButtons.forEach(btn => {
     btn.addEventListener('click', () => {
         const targetTab = btn.dataset.tab;
-        
+
         // Update active tab button
         tabButtons.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        
+
         // Update active tab content
         tabContents.forEach(content => {
             content.classList.remove('active');
@@ -56,7 +56,7 @@ tabButtons.forEach(btn => {
                 content.classList.add('active');
             }
         });
-        
+
         // Refresh saved bills list when switching to saved tab
         if (targetTab === 'saved') {
             displaySavedBills();
@@ -82,206 +82,144 @@ itemPersonInput.addEventListener('keypress', (e) => {
 // Initialize display
 displayItems();
 
-// Store the uploaded file for OCR processing
+// Receipt extraction is a draft; importing never discards unresolved rows.
 let uploadedFile = null;
+let receiptSummary = null;
+let scanVersion = 0;
+const reviewSummary = document.getElementById('review-summary');
+const reviewStatus = document.getElementById('review-status');
+const useReceiptTotalBtn = document.getElementById('use-receipt-total');
+const reviewAddBtn = document.getElementById('review-add-item');
 
-// Receipt upload handlers
-uploadReceiptBtn.addEventListener('click', () => receiptUpload.click());
+function resetReceipt() {
+    scanVersion++;
+    parsedItems = [];
+    receiptSummary = null;
+    parsedItemsSection.style.display = 'none';
+    parsingStatus.textContent = '';
+    uploadReceiptBtn.disabled = false;
+    parseReceiptBtn.disabled = false;
+}
 
-receiptUpload.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) {
-        // Validate file type - Tesseract.js works best with PNG, JPEG, BMP
-        const supportedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/bmp', 'image/webp', 'image/gif'];
-        if (!file.type.startsWith('image/')) {
-            parsingStatus.textContent = 'Please select an image file (PNG, JPEG, BMP, WebP, or GIF)';
-            receiptUpload.value = '';
-            return;
-        }
-        
-        // Warn about potentially unsupported formats
-        if (!supportedTypes.includes(file.type.toLowerCase())) {
-            parsingStatus.textContent = 'Warning: This format may not work well. PNG or JPEG recommended.';
-        } else {
-            parsingStatus.textContent = '';
-        }
-        
-        uploadedFile = file;
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            receiptImage.src = event.target.result;
-            receiptPreview.style.display = 'block';
-            if (!parsingStatus.textContent.includes('Warning')) {
-                parsingStatus.textContent = '';
-            }
-        };
-        reader.onerror = () => {
-            parsingStatus.textContent = 'Error reading file';
-            uploadedFile = null;
-        };
-        reader.readAsDataURL(file);
-    }
+uploadReceiptBtn.addEventListener('click', () => {
+    if (parsedItems.length && !confirm('Replace the receipt draft and its remaining items?')) return;
+    receiptUpload.click();
 });
-
+receiptUpload.addEventListener('change', event => {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (!['image/png', 'image/jpeg', 'image/webp', 'image/bmp', 'image/gif'].includes(file.type) || file.size > 10 * 1024 * 1024) {
+        document.getElementById('scan-service-note').textContent = 'Choose an image under 10 MB (PNG, JPEG, WebP, BMP, or GIF).';
+        receiptUpload.value = '';
+        return;
+    }
+    resetReceipt();
+    uploadedFile = file;
+    const version = scanVersion;
+    const reader = new FileReader();
+    reader.onload = event => {
+        if (version !== scanVersion) return;
+        receiptImage.src = event.target.result;
+        receiptPreview.style.display = 'block';
+    };
+    reader.onerror = () => { parsingStatus.textContent = 'Could not read the image. Try another photo.'; };
+    reader.readAsDataURL(file);
+});
 cancelUploadBtn.addEventListener('click', () => {
+    if (parsedItems.length && !confirm('Discard the receipt draft?')) return;
+    resetReceipt();
     receiptUpload.value = '';
     uploadedFile = null;
+    receiptImage.removeAttribute('src');
     receiptPreview.style.display = 'none';
-    parsedItemsSection.style.display = 'none';
-    parsedItems = [];
-    parsingStatus.textContent = '';
 });
 
-parseReceiptBtn.addEventListener('click', async () => {
-    if (!uploadedFile && (!receiptImage.src || receiptImage.src === window.location.href)) {
-        parsingStatus.textContent = 'Please upload a receipt image first';
-        return;
-    }
-    
-    // Check if Tesseract is loaded
-    if (typeof Tesseract === 'undefined') {
-        parsingStatus.textContent = 'Error: Tesseract.js library not loaded. Please refresh the page.';
-        return;
-    }
-    
-    parsingStatus.textContent = 'Loading OCR engine... This may take a moment.';
+async function scanReceipt() {
+    if (!uploadedFile) return;
+    if (parsedItems.length && !confirm('Replace your current receipt draft with a new scan?')) return;
+    const version = ++scanVersion;
     parseReceiptBtn.disabled = true;
-    
+    uploadReceiptBtn.disabled = true;
+    parsingStatus.textContent = 'Loading on-device OCR…';
     try {
-        let imageSource;
-        
-        // Prefer using the File object directly
-        if (uploadedFile) {
-            imageSource = uploadedFile;
-        } else if (receiptImage.src && receiptImage.src.startsWith('data:')) {
-            // If we have a data URL, create a blob from it
-            const response = await fetch(receiptImage.src);
-            const blob = await response.blob();
-            imageSource = blob;
-        } else {
-            // Fallback to image src
-            imageSource = receiptImage.src;
-        }
-        
-        parsingStatus.textContent = 'Processing image...';
-        
-        const result = await Tesseract.recognize(imageSource, 'eng', {
-            logger: m => {
-                if (m.status === 'recognizing text') {
-                    const progress = m.progress || 0;
-                    parsingStatus.textContent = `Processing: ${Math.round(progress * 100)}%`;
-                } else if (m.status === 'loading tesseract core') {
-                    parsingStatus.textContent = 'Loading OCR engine...';
-                } else if (m.status === 'initializing tesseract') {
-                    parsingStatus.textContent = 'Initializing...';
-                } else if (m.status) {
-                    parsingStatus.textContent = m.status + '...';
-                }
+        if (typeof Tesseract === 'undefined') throw new Error('OCR did not load. Check your connection and refresh.');
+        const result = await Tesseract.recognize(uploadedFile, 'eng', {
+            logger: message => {
+                if (version === scanVersion && message.status === 'recognizing text')
+                    parsingStatus.textContent = `Reading text: ${Math.round((message.progress || 0) * 100)}%`;
             }
         });
-        
-        const text = result?.data?.text || result?.text || '';
-        
-        if (!text || text.trim().length === 0) {
-            parsingStatus.textContent = 'No text found in image. Please try a clearer photo.';
-            parseReceiptBtn.disabled = false;
-            return;
+        const text = result?.data?.text || '';
+        const receipt = {items: parseReceiptText(text), warnings: ['On-device OCR is less precise. Compare each item with the image.']};
+        for (const [key, pattern] of Object.entries({subtotal: /^sub\s*total/i, tax: /^tax\b/i, tip: /^(tip|gratuity)\b/i, total: /^(grand\s+total|total|amount\s+paid)\b/i})) {
+            const line = text.split('\n').find(line => pattern.test(line.trim()));
+            const amount = line?.match(/(\d+[.,]\d{2})\s*$/);
+            receipt[key] = amount ? Number(amount[1].replace(',', '.')) : null;
         }
-        
-        parsingStatus.textContent = 'Parsing receipt data...';
-        const items = parseReceiptText(text);
-        parsedItems = items;
+        if (version !== scanVersion) return;
+        if (!Array.isArray(receipt.items)) throw new Error('Could not read receipt items. Try a clearer photo.');
+        receiptSummary = receipt;
+        parsedItems = receipt.items.map(item => ({
+            name: item.name || 'Unnamed item', quantity: item.quantity ?? null,
+            price: Number.isFinite(item.price) ? item.price : 0,
+            needsReview: Boolean(item.needsReview || item.price == null), people: []
+        }));
         displayParsedItems();
         parsedItemsSection.style.display = 'block';
-        parsingStatus.textContent = `Found ${items.length} items. Check console (F12) to see raw OCR text if needed.`;
-        console.log('Raw OCR Text:', text);
-        console.log('Parsed Items:', items);
+        parsingStatus.textContent = `Found ${parsedItems.length} items. Review them below before adding.`;
     } catch (error) {
-        const errorMsg = error?.message || error?.toString() || String(error) || 'Unknown error';
-        parsingStatus.textContent = 'Error processing receipt: ' + errorMsg;
-        console.error('OCR Error:', error);
-        console.error('Error details:', {
-            message: error?.message,
-            stack: error?.stack,
-            name: error?.name,
-            uploadedFile: !!uploadedFile,
-            imageSrc: receiptImage.src?.substring(0, 50)
-        });
+        if (version !== scanVersion) return;
+        parsingStatus.textContent = 'Could not scan the receipt: ' + error.message;
     } finally {
-        parseReceiptBtn.disabled = false;
+        if (version === scanVersion) {
+            parseReceiptBtn.disabled = false;
+            uploadReceiptBtn.disabled = false;
+        }
     }
-});
+}
+parseReceiptBtn.addEventListener('click', scanReceipt);
 
 addAllParsedBtn.addEventListener('click', () => {
-    parsedItems.forEach(item => {
-        if (item.price > 0) {
-            const itemId = Date.now() + Math.random();
-            const peopleList = item.people || (item.person ? [item.person] : []);
-            
-            if (peopleList.length > 0) {
-                items.push({
-                    id: itemId,
-                    price: item.price,
-                    people: peopleList
-                });
-                peopleList.forEach(person => {
-                    people.add(person);
-                });
-            }
-        }
+    const ready = parsedItems.filter(item => Number.isFinite(item.price) && item.price > 0);
+    ready.forEach(item => {
+        items.push({id: Date.now() + Math.random(), name: item.name, quantity: item.quantity, price: item.price, people: [...item.people]});
+        item.people.forEach(person => people.add(person));
     });
-    displayItems();
+    parsedItems = parsedItems.filter(item => !ready.includes(item));
     calculateResults();
-    
-    // Clear parsed items
-    parsedItems = [];
-    parsedItemsSection.style.display = 'none';
-    receiptUpload.value = '';
-    receiptPreview.style.display = 'none';
-});
-
-clearParsedBtn.addEventListener('click', () => {
-    parsedItems = [];
-    parsedItemsSection.style.display = 'none';
     displayParsedItems();
+    reviewStatus.textContent = `${ready.length} item(s) added. ${parsedItems.length ? 'Remaining items are kept here for review.' : 'All reviewed items are in your bill.'}`;
+});
+clearParsedBtn.addEventListener('click', () => {
+    if (parsedItems.length && !confirm('Discard the remaining receipt items?')) return;
+    parsedItems = [];
+    parsedItemsSection.style.display = 'none';
+});
+reviewAddBtn.addEventListener('click', () => {
+    parsedItems.push({name: '', quantity: 1, price: 0, people: []});
+    displayParsedItems();
+});
+useReceiptTotalBtn.addEventListener('click', () => {
+    if (!receiptSummary || !(receiptSummary.total > 0)) return;
+    if (totalPaidInput.value && !confirm('Replace the current total paid with the detected receipt total?')) return;
+    totalPaidInput.value = receiptSummary.total.toFixed(2);
+    calculateResults();
+    reviewStatus.textContent = 'Detected total applied. Confirm it includes the tip you actually paid.';
 });
 
 // Add a new item from the form inputs
 function addItem() {
-    const price = parseFloat(itemPriceInput.value) || 0;
-    const personInput = itemPersonInput.value.trim();
-
-    // Require both price and at least one person
-    if (price <= 0 || !personInput) {
-        return; // Don't add items without both price and person
-    }
-
-    // Parse multiple people (comma-separated)
-    const peopleList = personInput.split(',').map(p => p.trim()).filter(p => p.length > 0);
-
-    if (peopleList.length === 0) {
+    const price = Number(itemPriceInput.value);
+    if (!Number.isFinite(price) || price <= 0) {
+        showFlowError('Enter an item price greater than zero.');
         return;
     }
-
-    const itemId = Date.now();
-    items.push({
-        id: itemId,
-        price: price,
-        people: peopleList  // Changed from person to people (array)
-    });
-
-    // Update people set
-    peopleList.forEach(person => {
-        people.add(person);
-    });
-
-    // Clear the input fields
+    items.push({id: Date.now() + Math.random(), price,
+        name: document.getElementById('item-name').value.trim(), people: []});
     itemPriceInput.value = '';
-    itemPersonInput.value = '';
-
-    // Refresh display and calculations
+    document.getElementById('item-name').value = '';
+    clearFlowError();
     displayItems();
-    calculateResults();
 }
 
 // Display all items on the right side (read-only)
@@ -295,22 +233,22 @@ function displayItems() {
     items.forEach(item => {
         const totalPaid = parseFloat(totalPaidInput.value) || 0;
         const subtotal = items.reduce((sum, i) => sum + (i.price || 0), 0);
-        const finalPrice = subtotal > 0 && totalPaid > 0 
-            ? (item.price / subtotal) * totalPaid 
+        const finalPrice = subtotal > 0 && totalPaid > 0
+            ? (item.price / subtotal) * totalPaid
             : item.price;
 
         const peopleList = item.people || (item.person ? [item.person] : []); // Support both old and new format
-        const peopleDisplay = peopleList.length > 0 
+        const peopleDisplay = peopleList.length > 0
             ? peopleList.map(p => escapeHtml(p)).join(', ')
-            : 'No person';
-        
+            : 'Assign in the next step';
+
         itemsHTML += `
             <div class="item-display">
                 <div class="item-info">
-                    <span class="item-price-display">$${item.price.toFixed(2)}</span>
+                    <span class="item-price-display">${item.name ? escapeHtml(item.name) + ' · ' : ''}$${item.price.toFixed(2)}</span>
                     <span class="item-person-display ${peopleList.length === 0 ? 'no-person' : ''}">${peopleDisplay}</span>
                 </div>
-                ${totalPaid > 0 ? `<div class="item-final-price">$${finalPrice.toFixed(2)}</div>` : ''}
+
                 <button type="button" class="btn btn-danger remove-item" data-id="${item.id}">Remove</button>
             </div>
         `;
@@ -339,13 +277,13 @@ function displayItems() {
 function removeItem(id) {
     // Normalize ID for comparison (handle both number and string)
     const normalizedId = typeof id === 'string' ? parseFloat(id) : id;
-    
+
     const item = items.find(i => Math.abs(i.id - normalizedId) < 0.001); // Handle float comparison
     if (item) {
         const peopleList = item.people || (item.person ? [item.person] : []);
         // Check if each person has other items
         peopleList.forEach(person => {
-            const hasOtherItems = items.some(i => 
+            const hasOtherItems = items.some(i =>
                 Math.abs(i.id - normalizedId) >= 0.001 && // Different item
                 (i.people?.includes(person) || i.person === person)
             );
@@ -354,7 +292,7 @@ function removeItem(id) {
             }
         });
     }
-    
+
     items = items.filter(i => Math.abs(i.id - normalizedId) >= 0.001);
     displayItems();
     calculateResults();
@@ -364,12 +302,12 @@ function removeItem(id) {
 function calculateResults() {
     // Refresh items display to show updated final prices
     displayItems();
-    
+
     const totalPaid = parseFloat(totalPaidInput.value) || 0;
-    
+
     // Calculate subtotal (sum of all item prices)
     const subtotal = items.reduce((sum, item) => sum + (item.price || 0), 0);
-    
+
     if (subtotal === 0 || totalPaid === 0 || items.length === 0) {
         resultsContainer.innerHTML = '<p class="placeholder">Add items and enter total to see results</p>';
         return;
@@ -378,10 +316,10 @@ function calculateResults() {
     // Calculate proportion and final price for each item
     const itemsWithFinalPrice = items.map(item => {
         if (item.price === 0) return null;
-        
+
         const proportion = item.price / subtotal;
         const finalPrice = proportion * totalPaid;
-        
+
         return {
             ...item,
             proportion,
@@ -393,11 +331,11 @@ function calculateResults() {
     const personTotals = {};
     itemsWithFinalPrice.forEach(item => {
         const peopleList = item.people || (item.person ? [item.person] : []);
-        
+
         if (peopleList.length > 0) {
             // Split the final price evenly among all people assigned to this item
             const pricePerPerson = item.finalPrice / peopleList.length;
-            
+
             peopleList.forEach(person => {
                 if (!personTotals[person]) {
                     personTotals[person] = 0;
@@ -414,12 +352,12 @@ function calculateResults() {
     }
 
     let resultsHTML = '';
-    
+
     // Sort people alphabetically
-    const sortedPeople = Object.keys(personTotals).sort();
-    
+    const sortedPeople = [...new Set([...Object.keys(personTotals), ...dinnerGuests])].sort();
+
     sortedPeople.forEach(person => {
-        const amount = personTotals[person];
+        const amount = personTotals[person] || 0;
         resultsHTML += `
             <div class="person-result">
                 <span class="person-name">${escapeHtml(person)}</span>
@@ -447,28 +385,32 @@ function saveBill() {
         alert('Please enter a bill name');
         return;
     }
-    
+
     if (items.length === 0) {
         alert('Please add at least one item before saving');
         return;
     }
-    
+
     const bill = {
         id: Date.now(),
         name: billName,
         totalPaid: parseFloat(totalPaidInput.value) || 0,
         items: items.map(item => ({
             id: item.id,
+            name: item.name || '',
+            quantity: item.quantity ?? null,
             price: item.price,
             people: item.people || (item.person ? [item.person] : []),
             person: item.person || (item.people && item.people.length > 0 ? item.people[0] : '') // Keep for backward compatibility
         })),
+        participants: [...dinnerGuests],
+        receiptSummary,
         savedAt: new Date().toISOString()
     };
-    
+
     // Get existing bills
     const savedBills = getSavedBills();
-    
+
     // Check if name already exists
     const existingIndex = savedBills.findIndex(b => b.name === billName);
     if (existingIndex !== -1) {
@@ -480,12 +422,11 @@ function saveBill() {
     } else {
         savedBills.push(bill);
     }
-    
+
     // Save to localStorage
     localStorage.setItem('savedBills', JSON.stringify(savedBills));
-    
+
     alert('Bill saved successfully!');
-    billNameInput.value = '';
 }
 
 // Get saved bills from localStorage
@@ -497,22 +438,22 @@ function getSavedBills() {
 // Display saved bills
 function displaySavedBills() {
     const savedBills = getSavedBills();
-    
+
     if (savedBills.length === 0) {
         savedBillsList.innerHTML = '<p class="placeholder">No saved bills yet</p>';
         return;
     }
-    
+
     // Sort by saved date (newest first)
     savedBills.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
-    
+
     let html = '';
     savedBills.forEach(bill => {
         const date = new Date(bill.savedAt);
         const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const itemCount = bill.items.length;
         const totalPaid = bill.totalPaid || 0;
-        
+
         html += `
             <div class="saved-bill-item" data-id="${bill.id}">
                 <div class="saved-bill-info">
@@ -526,9 +467,9 @@ function displaySavedBills() {
             </div>
         `;
     });
-    
+
     savedBillsList.innerHTML = html;
-    
+
     // Add event listeners
     document.querySelectorAll('.load-bill').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -537,7 +478,7 @@ function displaySavedBills() {
             loadBill(id);
         });
     });
-    
+
     document.querySelectorAll('.delete-bill').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -545,7 +486,7 @@ function displaySavedBills() {
             deleteBill(id);
         });
     });
-    
+
     // Allow clicking on the item to load
     document.querySelectorAll('.saved-bill-item').forEach(item => {
         item.addEventListener('click', (e) => {
@@ -561,28 +502,38 @@ function displaySavedBills() {
 function loadBill(id) {
     const savedBills = getSavedBills();
     const bill = savedBills.find(b => b.id === id);
-    
+
     if (!bill) {
         alert('Bill not found');
         return;
     }
-    
+
+    // Clear receipt drafts so a loaded bill cannot inherit another dinner’s scan.
+    resetReceipt();
+    uploadedFile = null;
+    receiptUpload.value = '';
+    receiptImage.removeAttribute('src');
+    receiptPreview.style.display = 'none';
+    receiptSummary = bill.receiptSummary || null;
+
     // Clear current bill
     items = [];
     people = new Set();
     totalPaidInput.value = '';
     billNameInput.value = '';
-    
+
     // Load bill data
     billNameInput.value = bill.name;
     totalPaidInput.value = bill.totalPaid || '';
     items = bill.items.map(item => ({
         id: item.id,
+        name: item.name || '',
+        quantity: item.quantity ?? null,
         price: item.price,
         people: item.people || (item.person ? [item.person] : []),
         person: item.person || (item.people && item.people.length > 0 ? item.people[0] : '') // Keep for backward compatibility
     }));
-    
+
     // Update people set
     items.forEach(item => {
         const peopleList = item.people || (item.person ? [item.person] : []);
@@ -592,18 +543,21 @@ function loadBill(id) {
             }
         });
     });
-    
+
     // Refresh display
     displayItems();
     calculateResults();
-    
+
     // Switch to current bill tab
     tabButtons.forEach(btn => {
         if (btn.dataset.tab === 'current') {
             btn.click();
         }
     });
-    
+
+    dinnerGuests = [...new Set([...(bill.participants || []), ...items.flatMap(item => item.people || [])])];
+    renderGuests();
+    goToStep(4);
     alert('Bill loaded successfully!');
 }
 
@@ -612,11 +566,11 @@ function deleteBill(id) {
     if (!confirm('Are you sure you want to delete this bill?')) {
         return;
     }
-    
+
     const savedBills = getSavedBills();
     const filtered = savedBills.filter(b => b.id !== id);
     localStorage.setItem('savedBills', JSON.stringify(filtered));
-    
+
     displaySavedBills();
 }
 
@@ -624,11 +578,12 @@ function deleteBill(id) {
 function parseReceiptText(text) {
     // Store raw text for debugging
     window.lastReceiptText = text;
-    
+
     const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
     const parsedItemsList = [];
+    const seenLines = new Set();
     const seenItems = new Set(); // Avoid duplicates
-    
+
     // More comprehensive price patterns
     const pricePatterns = [
         /\$?\s*(\d+\.\d{2})\b/,      // $12.99 or 12.99 (with word boundary)
@@ -636,19 +591,19 @@ function parseReceiptText(text) {
         /\$?\s*(\d+\.\d{1,2})\b/,    // 12.9 or 12.99
         /\$?\s*(\d+)\s*$/,           // $12 or 12 at end (whole dollars)
     ];
-    
+
     // Skip patterns for totals/summaries
     const skipPatterns = [
-        /^(TOTAL|SUBTOTAL|TAX|TIP|GRATUITY|AMOUNT|BALANCE|DUE|CHANGE|CASH|CARD|CREDIT|DEBIT)/i,
+        /^(TOTAL|GRAND\s+TOTAL|SUB\s*TOTAL|TAX|TIP|GRATUITY|AMOUNT|BALANCE|DUE|CHANGE|CASH|CARD|CREDIT|DEBIT)/i,
         /^(DATE|TIME|RECEIPT|INVOICE|ORDER|#|NO\.|NUMBER)/i,
         /^(THANK|YOU|VISIT|AGAIN|PLEASE|COME|BACK)/i,
         /^(\d{1,2}\/\d{1,2}\/\d{2,4})/, // Dates
         /^(\d{1,2}:\d{2})/,            // Times
     ];
-    
+
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        
+
         // Skip header/footer/summary lines
         let shouldSkip = false;
         for (const pattern of skipPatterns) {
@@ -658,20 +613,20 @@ function parseReceiptText(text) {
             }
         }
         if (shouldSkip) continue;
-        
+
         // Try multiple strategies to find price and item
-        
+
         // Strategy 1: Price at end of line (most common)
         let price = null;
         let itemName = '';
-        
+
         for (const pattern of pricePatterns) {
             const matches = [...line.matchAll(new RegExp(pattern.source, 'g'))];
             if (matches.length > 0) {
                 // Take the last price found (usually the item price, not quantity)
                 const lastMatch = matches[matches.length - 1];
                 const potentialPrice = parseFloat(lastMatch[1].replace(',', '.'));
-                
+
                 // Validate price is reasonable (between $0.01 and $1000)
                 if (potentialPrice >= 0.01 && potentialPrice <= 1000) {
                     price = potentialPrice;
@@ -680,7 +635,7 @@ function parseReceiptText(text) {
                 }
             }
         }
-        
+
         // Strategy 2: Price in middle or beginning (less common but happens)
         if (!price) {
             for (const pattern of pricePatterns) {
@@ -698,7 +653,7 @@ function parseReceiptText(text) {
                 }
             }
         }
-        
+
         // Strategy 3: Check next line for price (item name on one line, price on next)
         if (!price && i + 1 < lines.length) {
             const nextLine = lines[i + 1];
@@ -715,7 +670,7 @@ function parseReceiptText(text) {
                 }
             }
         }
-        
+
         // Strategy 4: Look for tab-separated or multi-space-separated columns
         if (!price) {
             // Split by multiple spaces or tabs
@@ -739,7 +694,7 @@ function parseReceiptText(text) {
                 }
             }
         }
-        
+
         // Add item if we found a valid price (name is optional)
         if (price) {
             // Clean up item name if we have one, otherwise use default
@@ -749,18 +704,19 @@ function parseReceiptText(text) {
                     .replace(/^\d+\.?\s*/, '')     // Remove leading numbers
                     .replace(/\s+/g, ' ')          // Normalize spaces
                     .trim();
-                
+
                 // Skip if name looks like a summary
                 if (itemName.match(/^(TOTAL|SUBTOTAL|TAX|TIP|GRATUITY|AMOUNT)/i)) continue;
             } else {
                 itemName = `Item ${parsedItemsList.length + 1}`;
             }
-            
+
             // Create unique key to avoid duplicates (use price + index)
             const itemKey = `${price.toFixed(2)}_${i}`;
             if (seenItems.has(itemKey)) continue;
             seenItems.add(itemKey);
-            
+
+            seenLines.add(i);
             parsedItemsList.push({
                 id: Date.now() + i,
                 name: itemName || `Item ${parsedItemsList.length + 1}`,
@@ -770,13 +726,14 @@ function parseReceiptText(text) {
             });
         }
     }
-    
+
     // If still very few items, try more aggressive parsing
     if (parsedItemsList.length < 3) {
         // Look for any line with a decimal number that could be a price
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
-            
+            if (seenLines.has(i)) continue;
+
             // Skip if already processed or is a summary line
             let shouldSkip = false;
             for (const pattern of skipPatterns) {
@@ -786,7 +743,7 @@ function parseReceiptText(text) {
                 }
             }
             if (shouldSkip) continue;
-            
+
             // Find all decimal numbers
             const decimalNumbers = line.match(/\d+\.\d{1,2}|\d+,\d{1,2}/g);
             if (decimalNumbers) {
@@ -814,56 +771,60 @@ function parseReceiptText(text) {
             }
         }
     }
-    
+
     return parsedItemsList;
 }
 
-// Display parsed items in editable format
+
+// Keep the original extracted subtotal comparison stable as rows are imported.
+function updateReviewSummary() {
+    if (!receiptSummary) return;
+    const originalItems = receiptSummary.items || [];
+    const importedSubtotal = items.reduce((sum, item) => sum + item.price, 0);
+    const draftSubtotal = parsedItems.reduce((sum, item) => sum + (Number.isFinite(item.price) ? item.price : 0), 0);
+    const extractedSubtotal = originalItems.reduce((sum, item) => sum + (Number.isFinite(item.price) ? item.price : 0), 0);
+    const money = value => Number.isFinite(value) ? value.toFixed(2) : 'Not detected';
+    const warnings = [...(receiptSummary.warnings || [])];
+    if (Number.isFinite(receiptSummary.subtotal) && Math.abs(extractedSubtotal - receiptSummary.subtotal) > 0.02)
+        warnings.push('Extracted items do not match the receipt subtotal. Check for missing items or discounts.');
+    if (parsedItems.some(item => item.price <= 0)) warnings.push('Zero, unreadable or negative prices need correction. Resolve discounts manually before adding.');
+    if (receiptSummary.currency && receiptSummary.currency !== 'USD') warnings.push('This bill splitter displays dollars. Confirm the currency before adding.');
+    reviewSummary.innerHTML = `<div class="review-totals"><span>Extracted items <b>${money(extractedSubtotal)}</b></span><span>Receipt subtotal <b>${money(receiptSummary.subtotal)}</b></span><span>Tax <b>${money(receiptSummary.tax)}</b></span><span>Tip <b>${money(receiptSummary.tip)}</b></span><span>Receipt total <b>${money(receiptSummary.total)}</b></span></div>` +
+        warnings.map(warning => `<p class="review-warning">${escapeHtml(warning)}</p>`).join('');
+    useReceiptTotalBtn.hidden = !(receiptSummary.total > 0);
+    const ready = parsedItems.filter(item => Number.isFinite(item.price) && item.price > 0).length;
+    addAllParsedBtn.disabled = ready === 0;
+    addAllParsedBtn.textContent = ready ? `Keep ${ready} reviewed item${ready === 1 ? '' : 's'}` : 'Correct prices to keep items';
+    reviewStatus.textContent = `${parsedItems.length - ready} item(s) need a valid price. Current bill + draft: ${money(importedSubtotal + draftSubtotal)} before tax & tip.`;
+}
+
 function displayParsedItems() {
-    if (parsedItems.length === 0) {
-        parsedItemsContainer.innerHTML = '<p class="placeholder">No items parsed</p>';
-        return;
-    }
-    
-    let html = '';
-    parsedItems.forEach((item, index) => {
-        html += `
-            <div class="parsed-item-row" data-index="${index}">
-                <div class="parsed-item-fields">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div class="form-group" style="margin-bottom: 10px;">
-                            <label style="font-size: 0.85rem;">Price</label>
-                            <input type="number" class="parsed-item-price" value="${item.price.toFixed(2)}" step="0.01" min="0" data-index="${index}" style="width: 100%; padding: 6px 0; border: none; border-bottom: 1px solid rgba(0,0,0,0.2); background: transparent; font-size: 0.9rem;">
-                        </div>
-                        <div class="form-group" style="margin-bottom: 10px;">
-                            <label style="font-size: 0.85rem;">Person(s) - comma separated</label>
-                            <input type="text" class="parsed-item-person" value="${escapeHtml((item.people || (item.person ? [item.person] : [])).join(', '))}" placeholder="Enter name(s), e.g. Alice, Bob" data-index="${index}" style="width: 100%; padding: 6px 0; border: none; border-bottom: 1px solid rgba(0,0,0,0.2); background: transparent; font-size: 0.9rem;">
-                        </div>
-                    </div>
-                </div>
+    parsedItemsContainer.innerHTML = parsedItems.map((item, index) => `
+        <div class="parsed-item-row" data-index="${index}">
+            <div class="line"><strong>Item ${index + 1}${item.needsReview ? ' · Check against photo' : ''}</strong><button type="button" class="btn btn-danger" data-remove="${index}">Remove</button></div>
+            <div class="form-group"><label for="review-name-${index}">Item name</label><input id="review-name-${index}" data-field="name" data-index="${index}" value="${escapeAttribute(item.name)}"></div>
+            <div class="review-fields">
+                <div class="form-group"><label for="review-qty-${index}">Quantity</label><input type="number" min="0.01" step="any" id="review-qty-${index}" data-field="quantity" data-index="${index}" value="${item.quantity ?? ''}" placeholder="Unknown"></div>
+                <div class="form-group"><label for="review-price-${index}">Line total</label><input type="number" min="0" step="0.01" id="review-price-${index}" data-field="price" data-index="${index}" value="${item.price.toFixed(2)}"></div>
             </div>
-        `;
-    });
-    
-    parsedItemsContainer.innerHTML = html;
-    
-    document.querySelectorAll('.parsed-item-price').forEach(input => {
-        input.addEventListener('input', (e) => {
-            const index = parseInt(e.target.dataset.index);
-            parsedItems[index].price = parseFloat(e.target.value) || 0;
-        });
-    });
-    
-    document.querySelectorAll('.parsed-item-person').forEach(input => {
-        input.addEventListener('input', (e) => {
-            const index = parseInt(e.target.dataset.index);
-            const peopleInput = e.target.value.trim();
-            const peopleList = peopleInput.split(',').map(p => p.trim()).filter(p => p.length > 0);
-            parsedItems[index].people = peopleList;
-            // Keep person for backward compatibility
-            parsedItems[index].person = peopleList.length > 0 ? peopleList[0] : '';
-        });
-    });
+        </div>`).join('') || '<p class="placeholder">No remaining items. Add a missing item or scan another receipt.</p>';
+    parsedItemsContainer.querySelectorAll('[data-field]').forEach(input => input.addEventListener('input', () => {
+        const item = parsedItems[Number(input.dataset.index)];
+        const field = input.dataset.field;
+        if (field === 'people') item.people = [...new Set(input.value.split(',').map(name => name.trim()).filter(Boolean))];
+        else if (field === 'price' || field === 'quantity') item[field] = Number(input.value) || 0;
+        else item[field] = input.value;
+        updateReviewSummary();
+    }));
+    parsedItemsContainer.querySelectorAll('[data-remove]').forEach(button => button.addEventListener('click', () => {
+        parsedItems.splice(Number(button.dataset.remove), 1);
+        displayParsedItems();
+    }));
+    updateReviewSummary();
+}
+
+function escapeAttribute(value) {
+    return escapeHtml(String(value)).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 // Escape HTML to prevent XSS
@@ -873,3 +834,158 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+
+// Dinner setup and navigation are separate from the original splitting calculation.
+let dinnerGuests = [];
+let currentStep = 0;
+const flowSteps = [...document.querySelectorAll('[data-step]')];
+const flowError = document.getElementById('flow-error');
+const guestNameInput = document.getElementById('guest-name');
+function showFlowError(message) {
+    flowError.textContent = message;
+    flowError.hidden = false;
+}
+function clearFlowError() {
+    flowError.hidden = true;
+    flowError.textContent = '';
+}
+function renderGuests() {
+    document.getElementById('guest-list').innerHTML = dinnerGuests.map((name, index) =>
+        `<span class="guest-chip">${escapeHtml(name)}<button type="button" data-guest-remove="${index}" aria-label="Remove ${escapeAttribute(name)}">×</button></span>`).join('');
+    document.querySelectorAll('[data-guest-remove]').forEach(button => button.addEventListener('click', () => {
+        const name = dinnerGuests[Number(button.dataset.guestRemove)];
+        if (items.some(item => item.people?.includes(name)) && !confirm(`Remove ${name} and their item assignments?`)) return;
+        dinnerGuests = dinnerGuests.filter(guest => guest !== name);
+        items.forEach(item => { item.people = (item.people || []).filter(person => person !== name); });
+        renderGuests();
+    }));
+}
+function addGuests() {
+    const names = guestNameInput.value.split(',').map(name => name.trim()).filter(Boolean);
+    names.forEach(name => {
+        if (!dinnerGuests.some(guest => guest.toLocaleLowerCase() === name.toLocaleLowerCase())) dinnerGuests.push(name);
+    });
+    guestNameInput.value = '';
+    renderGuests();
+    clearFlowError();
+}
+document.getElementById('add-guest').addEventListener('click', addGuests);
+guestNameInput.addEventListener('keydown', event => {
+    if (event.key === 'Enter') { event.preventDefault(); addGuests(); }
+});
+function renderAssignments() {
+    document.getElementById('assignment-list').innerHTML = items.map((item, index) =>
+        `<fieldset class="assignment-item"><legend>${escapeHtml(item.name || `Item ${index + 1}`)} · $${item.price.toFixed(2)}</legend><div class="assignment-choices">${dinnerGuests.map((name, personIndex) =>
+            `<label><input type="checkbox" data-item="${index}" data-person="${personIndex}" ${(item.people || []).includes(name) ? 'checked' : ''}>${escapeHtml(name)}</label>`).join('')}</div></fieldset>`).join('');
+    document.querySelectorAll('[data-person]').forEach(input => input.addEventListener('change', () => {
+        const item = items[Number(input.dataset.item)];
+        const name = dinnerGuests[Number(input.dataset.person)];
+        const assigned = new Set(item.people || []);
+        if (input.checked) assigned.add(name); else assigned.delete(name);
+        item.people = [...assigned];
+        clearFlowError();
+    }));
+}
+function goToStep(step) {
+    currentStep = step;
+    clearFlowError();
+    flowSteps.forEach(panel => { panel.hidden = Number(panel.dataset.step) !== step; });
+    document.querySelectorAll('[data-progress]').forEach(label => {
+        if (Number(label.dataset.progress) === step) label.setAttribute('aria-current', 'step');
+        else label.removeAttribute('aria-current');
+    });
+    if (step === 1) displayItems();
+    if (step === 2) renderAssignments();
+    if (step === 3) {
+        document.getElementById('bill-subtotal').textContent = `Items subtotal: $${items.reduce((sum, item) => sum + item.price, 0).toFixed(2)}`;
+        useReceiptTotalBtn.hidden = !(receiptSummary?.total > 0);
+    }
+    if (step === 4) { calculateResults(); renderResultsDetails(); }
+    flowSteps.find(panel => Number(panel.dataset.step) === step)?.querySelector('h1, h2')?.focus();
+}
+function nextStep() {
+    if (currentStep === 0) {
+        if (guestNameInput.value.trim()) addGuests();
+        if (!dinnerGuests.length) return showFlowError('Add at least one person to continue.');
+    }
+    if (currentStep === 1) {
+        if (parseReceiptBtn.disabled) return showFlowError('Wait for receipt scanning to finish or cancel it.');
+        if (itemPriceInput.value || document.getElementById('item-name').value.trim()) return showFlowError('Add the item you’re entering, or clear its fields before continuing.');
+        if (parsedItems.length) return showFlowError('Keep the reviewed receipt items or discard the remaining draft before continuing.');
+        if (!items.length) return showFlowError('Add at least one item to continue.');
+    }
+    if (currentStep === 2 && items.some(item => !item.people?.length)) return showFlowError('Choose at least one person for every item.');
+    if (currentStep === 3 && (!Number.isFinite(Number(totalPaidInput.value)) || Number(totalPaidInput.value) <= 0)) return showFlowError('Enter a total paid greater than zero.');
+    goToStep(Math.min(4, currentStep + 1));
+}
+document.querySelectorAll('[data-next]').forEach(button => button.addEventListener('click', nextStep));
+document.querySelectorAll('[data-back]').forEach(button => button.addEventListener('click', () => goToStep(Math.max(0, currentStep - 1))));
+document.getElementById('reset-bill').addEventListener('click', () => {
+    items = [];
+    people = new Set();
+    dinnerGuests = [];
+    resetReceipt();
+    uploadedFile = null;
+    receiptUpload.value = '';
+    receiptImage.removeAttribute('src');
+    receiptPreview.style.display = 'none';
+    [billNameInput, totalPaidInput, itemPriceInput, itemPersonInput, guestNameInput, document.getElementById('item-name')].forEach(input => { input.value = ''; });
+    renderGuests();
+    calculateResults();
+    document.getElementById('results-details').replaceChildren();
+    document.getElementById('assignment-list').replaceChildren();
+    document.getElementById('parsed-items-container').replaceChildren();
+    document.getElementById('review-summary').replaceChildren();
+    document.getElementById('review-status').textContent = '';
+    useReceiptTotalBtn.hidden = true;
+    tabButtons.forEach(button => button.classList.toggle('active', button.dataset.tab === 'current'));
+    tabContents.forEach(panel => panel.classList.toggle('active', panel.id === 'current-bill'));
+    goToStep(0);
+    window.scrollTo({top: 0, behavior: 'instant'});
+    guestNameInput.focus();
+});
+goToStep(0);
+
+
+function renderResultsDetails() {
+    const total = Number(totalPaidInput.value) || 0;
+    const subtotal = items.reduce((sum, item) => sum + item.price, 0);
+    const money = value => '$' + value.toFixed(2);
+    const guests = [...new Set([...dinnerGuests, ...items.flatMap(item => item.people || [])])];
+    const finalPrice = item => subtotal > 0 ? item.price / subtotal * total : 0;
+    const summaryFields = [['Items subtotal', subtotal], ['Tax, tip & other adjustments', total - subtotal], ['Total paid', total]];
+    const detected = receiptSummary ? ['subtotal', 'tax', 'tip', 'total'].filter(key => Number.isFinite(receiptSummary[key])).map(key =>
+        `<div><dt>Receipt ${key}</dt><dd>${money(receiptSummary[key])}</dd></div>`).join('') : '';
+    const receiptPhoto = uploadedFile && receiptImage.src ? `<details class="result-receipt"><summary>View original receipt photo</summary><img src="${escapeAttribute(receiptImage.src)}" alt="Original dinner receipt"></details>` : '';
+    document.getElementById('results-details').innerHTML = `
+        <section class="result-overview"><h2>${escapeHtml(billNameInput.value.trim() || 'Dinner summary')}</h2>
+            <p class="helper">${guests.length} people · ${items.length} items</p>
+            <p class="result-guests">${guests.map(escapeHtml).join(', ')}</p>
+            <dl class="result-totals">${summaryFields.map(([label, value]) => `<div><dt>${label}</dt><dd>${money(value)}</dd></div>`).join('')}</dl>
+        </section>
+        <section class="result-item-list"><h2>All receipt items</h2>
+        ${items.map((item, index) => `<article class="result-item"><div class="line"><strong>${escapeHtml(item.name || `Item ${index + 1}`)}</strong><span>${money(finalPrice(item))} <small>final</small></span></div>
+            <p class="helper">${money(item.price)} before adjustments${item.quantity != null ? ` · Quantity: ${escapeHtml(String(item.quantity))}` : ''}</p>
+            <p class="helper">Shared by: ${escapeHtml((item.people || []).join(', '))}</p></article>`).join('')}
+        </section>
+        <section class="result-breakdown"><h2>Each person’s breakdown</h2>
+        ${guests.map(name => {
+            const assigned = items.filter(item => item.people?.includes(name));
+            const base = assigned.reduce((sum, item) => sum + item.price / item.people.length, 0);
+            const final = assigned.reduce((sum, item) => sum + finalPrice(item) / item.people.length, 0);
+            return `<article class="result-person"><h3>${escapeHtml(name)}</h3>${assigned.length ? assigned.map(item => `<div class="result-detail-row"><span>${escapeHtml(item.name || `Item ${items.indexOf(item) + 1}`)}${item.people.length > 1 ? ` <small>1/${item.people.length} share</small>` : ''}</span><span>${money(finalPrice(item) / item.people.length)}</span></div>`).join('') : '<p class="helper">No items assigned.</p>'}
+                <dl class="result-totals"><div><dt>Before adjustments</dt><dd>${money(base)}</dd></div><div><dt>Tax, tip & other adjustments</dt><dd>${money(final - base)}</dd></div><div><dt>Total owed</dt><dd>${money(final)}</dd></div></dl></article>`;
+        }).join('')}</section>
+        ${detected ? `<section class="result-detected"><h2>Detected receipt amounts</h2><p class="helper">Scanned estimates, shown for reference. The split uses your total paid above.</p><dl class="result-totals">${detected}</dl></section>` : ''}
+        ${receiptPhoto}`;
+}
+billNameInput.addEventListener('input', () => { if (currentStep === 4) renderResultsDetails(); });
+
+document.getElementById('get-started').addEventListener('click', () => {
+    document.getElementById('landing-page').classList.remove('active');
+    document.getElementById('current-bill').classList.add('active');
+    tabButtons.forEach(button => button.classList.toggle('active', button.dataset.tab === 'current'));
+    goToStep(0);
+    window.scrollTo({top: 0, behavior: 'instant'});
+    guestNameInput.focus();
+});
