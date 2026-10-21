@@ -10,16 +10,16 @@
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <title>Dinner Bill Splitter</title>
-    <link rel="stylesheet" href="style.css?v=15">
+    <link rel="stylesheet" href="style.css?v=16">
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
 </head>
 <body>
 <div class="container">
     <header class="app-header">
-        <a class="brand" href="./" aria-label="Bill Splitter home">split<span aria-hidden="true">✳</span></a>
+        <a class="brand" href="./" aria-label="Bill Splitter home">split</a>
         <nav class="tabs" aria-label="Bills">
-            <button class="tab-btn" data-tab="current">Current bill</button>
-            <button class="tab-btn" data-tab="saved">Saved bills</button>
+            <button class="tab-btn" data-tab="current"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v18l-2.5-2-2.5 2-2.5-2L7 21V3Z"/><path d="M10 8h4m-4 4h4"/></svg><span>Current bill</span></button>
+            <button class="tab-btn" data-tab="saved"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4V4Z"/></svg><span>Saved bills</span></button>
         </nav>
     </header>
     <section class="tab-content active landing-page" id="landing-page" aria-labelledby="landing-title">
@@ -109,6 +109,6 @@
     </div>
     <div class="tab-content" id="saved-bills"><div class="page-heading"><h1>Saved bills</h1><p class="subtitle">View or load a saved bill.</p></div><div class="saved-bills-container"><div id="saved-bills-list"><p class="placeholder">No saved bills yet</p></div></div></div>
 </div>
-<script src="script.js?v=8"></script>
+<script src="script.js?v=9"></script>
 </body>
 </html>

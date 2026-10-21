@@ -59,3 +59,45 @@ input{scroll-margin-block:100px}button{touch-action:manipulation}
     .result-item .line{flex-direction:row}.result-person{padding:16px}.landing-hero{padding:38px 0}.landing-hero .btn{width:100%;justify-content:space-between}
 }
 @media(display-mode:standalone){.app-header{padding-top:16px}.container{min-height:100dvh}}
+
+/* Compact app chrome with thumb-accessible navigation on phones. */
+.tabs svg{display:none}
+@media(max-width:600px){
+    :root{--radius:16px}
+    .container{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
+    .app-header{position:sticky;top:0;z-index:10;min-height:60px;background:var(--background);border-bottom:0;padding:12px 0}
+    .brand{font-size:28px;letter-spacing:-1.2px;font-weight:700}
+    .tabs{position:fixed;bottom:0;left:0;right:0;z-index:20;display:grid;grid-template-columns:1fr 1fr;gap:0;padding:8px max(18px,env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left));background:rgba(255,254,250,.96);border-top:1px solid var(--line);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+    .tab-btn{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;min-height:52px;font-size:11px;border-radius:12px;color:var(--muted);padding:4px 8px}
+    .tabs svg{display:block;width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+    .tab-btn.active{box-shadow:none;background:#edf2e3;color:#435337}
+    .page-heading{padding-top:12px}.page-heading .subtitle{display:none}.page-heading #bill-name{font-size:24px;letter-spacing:-.5px}
+    .flow-progress{border:0;gap:6px;padding-bottom:0;margin-bottom:28px}
+    .flow-progress span{position:relative;padding:12px 0 10px;color:var(--muted)}
+    .flow-progress span::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:4px;background:var(--line)}
+    .flow-progress [aria-current="step"]{border:0;padding-bottom:10px}.flow-progress [aria-current="step"]::before{background:#788c5b}
+    .flow-step>h1{font-size:30px;line-height:1.15;letter-spacing:-1px;margin-bottom:12px}
+    .flow-step>.helper{line-height:1.6;margin-bottom:26px}
+    .btn{border-radius:14px;min-height:52px;font-weight:600}.btn-primary{background:#dbeab9}.btn:active{transform:scale(.98)}
+    .form-group input{border-radius:12px;padding:14px;background:var(--surface)}
+    .guest-entry{margin:26px 0 20px}.guest-chip{border-radius:24px;padding-left:16px;border:1px solid var(--line)}
+    .flow-actions{position:sticky;bottom:calc(82px + env(safe-area-inset-bottom));z-index:5;gap:8px;padding:12px 0 4px;background:var(--background);border-top:0}
+    .flow-actions .btn-secondary{background:var(--surface)}
+    .assignment-item{border-radius:16px;padding:18px 12px}.assignment-choices label{border-radius:12px;min-height:52px}
+    .receipt-source-actions{padding:16px;border:1px solid var(--line);border-radius:20px;background:var(--surface)}
+    .receipt-source-actions .btn-secondary{border:0;background:transparent}
+    .paid-section{display:block;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:24px}
+    .currency-field{max-width:none;font-size:40px;margin-top:14px}.currency-field input{text-align:left;font-size:40px;letter-spacing:-1px}
+    .landing-hero{padding:30px 0 32px}.landing-hero h1{font-size:44px;letter-spacing:-2px}.landing-description{font-size:17px}
+    .landing-how{border:0;background:var(--surface);border-radius:20px;padding:22px;gap:24px}.landing-number{border-radius:50%;height:32px;min-width:32px}
+    .result-person,.person-result,.saved-bill-item{border:1px solid var(--line);border-radius:16px}
+    .result-receipt summary{min-height:44px;padding:12px 0}
+}
+@media(max-width:600px) and (prefers-reduced-motion:no-preference){
+    .flow-step:not([hidden]){animation:step-in .18s ease-out}
+    @keyframes step-in{from{opacity:.3;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+}
+@media(max-width:600px){
+    body:has(input:focus) .tabs{position:static;margin-top:24px;border-radius:16px;padding-bottom:8px}
+    body:has(input:focus) .flow-actions{position:static}
+}
