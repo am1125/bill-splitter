@@ -13,7 +13,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=44">
+    <link rel="stylesheet" href="style.css?v=49">
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
 </head>
 <body>
@@ -102,9 +102,13 @@
         <section class="flow-step" data-step="4" hidden>
                 <section class="results-section"><p class="eyebrow">All split. All good.</p><div class="section-header"><h1 tabindex="-1">Everyone’s<br><em>share.</em></h1></div><p class="helper">Tax and tip are included in each share.</p><div id="results-container" aria-live="polite"><p class="placeholder">Add items and enter total to see results</p></div></section>
                 <details class="full-bill-record"><summary>View full bill details</summary><div id="results-details"></div></details>
+                <section class="save-bill-panel" aria-labelledby="save-bill-heading">
+                <h2 id="save-bill-heading">Save this bill</h2>
+                <p class="helper">Give this dinner a name to find it on your home page.</p>
                 <div class="bill-name-section form-group"><label for="bill-name">Bill name</label><input type="text" id="bill-name" placeholder="Name this bill" autocomplete="off"></div>
                 <button type="button" id="save-bill-btn" class="btn btn-primary save-button">Save bill <span aria-hidden="true">→</span></button>
-                <p class="storage-note">Saved bills stay in this browser.</p>
+                <p class="storage-note">Saved on this device, in this browser.</p>
+                </section>
 
             <div class="flow-actions"><button type="button" class="btn btn-secondary" data-back>← Edit total</button><button type="button" class="btn btn-secondary" id="reset-bill">Start over / clear bill</button></div>
         </section>
