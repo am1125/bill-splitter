@@ -213,7 +213,7 @@ function displayItems() {
     document.getElementById('bill-item-count').textContent = `${items.length} ${items.length === 1 ? 'item' : 'items'}`;
     document.getElementById('items-subtotal').textContent = '$' + items.reduce((sum, item) => sum + (item.price || 0), 0).toFixed(2);
     if (items.length === 0) {
-        itemsContainer.innerHTML = '<p class="placeholder">items you add will appear here</p>';
+        itemsContainer.innerHTML = '<p class="placeholder">Items you add will appear here</p>';
         return;
     }
 
@@ -449,7 +449,7 @@ function displaySavedBills() {
                     <span class="saved-bill-meta">${itemCount} item${itemCount !== 1 ? 's' : ''} • $${totalPaid.toFixed(2)} • ${dateStr}</span>
                 </div>
                 <div class="saved-bill-actions">
-                    <button type="button" class="btn btn-primary load-bill" data-id="${bill.id}">view bill</button>
+                    <button type="button" class="btn btn-primary load-bill" data-id="${bill.id}">View bill</button>
                     <button type="button" class="btn btn-danger delete-bill" data-id="${bill.id}">Delete</button>
                 </div>
             </div>
@@ -903,7 +903,7 @@ function selectAllGuests(index) {
 function renderAssignments() {
     document.getElementById('assignment-list').innerHTML = items.map((item, index) =>
         `<fieldset class="assignment-item"><legend>${escapeHtml(item.name || `Item ${index + 1}`)} · $${item.price.toFixed(2)}</legend><div class="assignment-choices">${dinnerGuests.map((name, personIndex) =>
-            `<label><input type="checkbox" data-item="${index}" data-person="${personIndex}" ${(item.people || []).includes(name) ? 'checked' : ''}>${escapeHtml(name)}</label>`).join('')}</div><button type="button" class="select-all-guests" data-select-all="${index}" aria-label="Select everyone for ${escapeAttribute(item.name || `Item ${index + 1}`)}">select all</button></fieldset>`).join('');
+            `<label><input type="checkbox" data-item="${index}" data-person="${personIndex}" ${(item.people || []).includes(name) ? 'checked' : ''}>${escapeHtml(name)}</label>`).join('')}</div><button type="button" class="select-all-guests" data-select-all="${index}" aria-label="Select everyone for ${escapeAttribute(item.name || `Item ${index + 1}`)}">Select all</button></fieldset>`).join('');
     document.querySelectorAll('[data-select-all]').forEach(button => button.addEventListener('click', () => selectAllGuests(Number(button.dataset.selectAll))));
     document.querySelectorAll('[data-person]').forEach(input => input.addEventListener('change', () => {
         const item = items[Number(input.dataset.item)];

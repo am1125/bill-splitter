@@ -3,23 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#f6f4ed">
+    <meta name="theme-color" content="#faf9eb">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="split">
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=2">
     <title>dinner bill splitter</title>
-    <link rel="stylesheet" href="style.css?v=34">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=44">
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
 </head>
 <body>
 <div class="container">
     <header class="app-header">
-        <a id="home-link" class="brand" href="./" aria-label="Bill Splitter home"><img src="icons/icon-192.png?v=2" width="48" height="48" alt=""></a>
+        <a id="home-link" class="brand" href="./" aria-label="Bill Splitter home"><span class="brand-mark" aria-hidden="true">÷</span></a>
         <nav class="tabs" aria-label="bill navigation">
-            <button type="button" id="home-tab" class="tab-btn active" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v11h-7v-7h-4v7H3Z"/></svg><span>home</span></button>
-            <button type="button" id="add-bill-tab" class="tab-btn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v18l-2.5-2-2.5 2-2.5-2L7 21V3Z"/><path d="M12 7v8m-4-4h8"/></svg><span>add bill</span></button>
+            <button type="button" id="home-tab" class="tab-btn active" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v11h-7v-7h-4v7H3Z"/></svg><span>Home</span></button>
+            <button type="button" id="add-bill-tab" class="tab-btn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v18l-2.5-2-2.5 2-2.5-2L7 21V3Z"/><path d="M12 7v8m-4-4h8"/></svg><span>Add bill</span></button>
         </nav>
     </header>
     <div class="tab-content" id="current-bill">
@@ -27,32 +30,32 @@
         <p id="flow-step-label" class="mobile-step-label">People · 1 of 5</p>
         <p id="flow-error" class="flow-error" role="alert" hidden></p>
         <section class="flow-step" data-step="0">
-            <h1 tabindex="-1">Who’s at dinner?</h1>
+            <p class="eyebrow">A table for your people</p><h1 tabindex="-1">Who’s<br><em>at dinner?</em></h1>
             <div id="guest-list" class="guest-list" aria-live="polite"></div>
             <div class="guest-entry"><div class="form-group"><label class="sr-only" for="guest-name">Person’s name</label><input id="guest-name" enterkeyhint="done" autocapitalize="none" placeholder="Add someone…" autocomplete="off"></div><button id="add-guest" class="btn btn-primary" type="button" aria-label="Add person"><span aria-hidden="true">+</span></button></div>
             <label class="remember-person"><input id="remember-person" type="checkbox" checked> Remember new people for next time</label>
             <section class="saved-people" aria-labelledby="saved-people-heading">
-                <h2 id="saved-people-heading">People you eat with</h2>
+                <h2 id="saved-people-heading">Your regulars</h2>
                 <p class="helper">Tap a name to add them to this dinner.</p>
                 <div id="saved-people-list" class="saved-people-list"></div>
                 <p id="saved-people-status" class="helper" role="status"></p>
                 <details id="manage-people"><summary>Manage saved people</summary><p class="helper">Changes apply to future dinners. Current and saved bills keep their names.</p><div id="saved-people-editor"></div></details>
             </section>
-            <div class="flow-actions"><button type="button" class="btn btn-primary" data-next><span>Next: Receipt</span><span aria-hidden="true">→</span></button></div>
+            <div class="flow-actions"><button type="button" class="btn btn-primary" data-next><span>Next: items</span><span aria-hidden="true">→</span></button></div>
         </section>
         <section class="flow-step" data-step="1" hidden>
-            <h1 tabindex="-1">what’s on the bill?</h1>
+            <p class="eyebrow">The good stuff</p><h1 tabindex="-1">What’s<br><em>on the bill?</em></h1>
             <div class="item-entry-options" aria-label="ways to add items">
-                <button type="button" id="choose-scan" class="item-entry-card" aria-expanded="false" aria-controls="scan-entry"><svg class="entry-symbol" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7V4h3m10 0h3v3M4 17v3h3m10 0h3v-3M7 12h10"/></svg><span>scan receipt</span><small>add a whole receipt</small></button>
-                <button type="button" id="choose-manual" class="item-entry-card" aria-expanded="false" aria-controls="manual-entry"><svg class="entry-symbol" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>add manually</span><small>one item at a time</small></button>
+                <button type="button" id="choose-scan" class="item-entry-card" aria-expanded="false" aria-controls="scan-entry"><svg class="entry-symbol" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7V4h3m10 0h3v3M4 17v3h3m10 0h3v-3M7 12h10"/></svg><span>Scan receipt</span><small>Add a whole receipt</small></button>
+                <button type="button" id="choose-manual" class="item-entry-card" aria-expanded="false" aria-controls="manual-entry"><svg class="entry-symbol" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Add manually</span><small>One item at a time</small></button>
             </div>
             <div id="scan-entry" class="item-entry-panel" hidden>
                 <div class="receipt-upload-form">
                     <input type="file" id="receipt-upload" accept="image/png,image/jpeg,image/jpg,image/bmp,image/webp,image/gif" hidden>
                     <input type="file" id="receipt-camera" accept="image/*" capture="environment" hidden>
                     <div class="receipt-source-actions">
-                    <button type="button" id="take-receipt-btn" class="btn receipt-photo-action camera-button"><span>take receipt photo</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4h-5L7 7H3v13h18V7h-4Z"/><circle cx="12" cy="13" r="3"/></svg></button>
-                    <button type="button" id="upload-receipt-btn" class="btn receipt-photo-action"><span>choose receipt photo</span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></button>
+                    <button type="button" id="take-receipt-btn" class="btn receipt-photo-action camera-button"><span>Take receipt photo</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4h-5L7 7H3v13h18V7h-4Z"/><circle cx="12" cy="13" r="3"/></svg></button>
+                    <button type="button" id="upload-receipt-btn" class="btn receipt-photo-action"><span>Choose receipt photo</span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></button>
                     </div>
                     <p id="scan-service-note" class="helper scan-note">Free receipt scanning runs on your device. Your receipt photo stays in your browser.</p>
                     <div id="receipt-preview" style="display:none">
@@ -80,24 +83,24 @@
                     </div>
                     <div class="line"><p class="helper">Enter the full price for each item.</p><button type="button" id="add-item-btn" class="btn btn-primary">+ Add item</button></div>
                 </div>
-                <section class="items-section bill-preview" aria-label="bill summary"><div class="section-header"><h2>your bill</h2><span id="bill-item-count" class="section-note">0 items</span></div><div id="items-container"></div><div class="bill-preview-total"><span>subtotal <small>before tax & tip</small></span><span id="items-subtotal">$0.00</span></div></section>
+                <section class="items-section bill-preview" aria-label="bill summary"><div class="section-header"><h2>Your bill</h2><span id="bill-item-count" class="section-note">0 items</span></div><div id="items-container"></div><div class="bill-preview-total"><span>Subtotal <small>Before tax & tip</small></span><span id="items-subtotal">$0.00</span></div></section>
 
             <div class="flow-actions"><button type="button" class="btn btn-secondary" data-back>← Back</button><button type="button" class="btn btn-primary" data-next>Next: Assign items →</button></div>
         </section>
         <section class="flow-step" data-step="2" hidden>
-            <h1 tabindex="-1">Assign items</h1><p class="helper">Choose one or more people for every item. Shared items split equally.</p>
+            <p class="eyebrow">A little for you. A little for me.</p><h1 tabindex="-1">Who had<br><em>what?</em></h1><p class="helper">Choose one or more people for every item. Shared items split equally.</p>
             <div id="assignment-list"></div>
             <div class="flow-actions"><button type="button" class="btn btn-secondary" data-back>← Back</button><button type="button" class="btn btn-primary" data-next>Next: Total paid →</button></div>
         </section>
         <section class="flow-step" data-step="3" hidden>
-            <h1 tabindex="-1">Total paid</h1><p class="helper">Enter the final amount, including tax and tip.</p>
+            <p class="eyebrow">One last number</p><h1 tabindex="-1">The<br><em>grand total.</em></h1><p class="helper">Enter the final amount, including tax and tip.</p>
             <p id="bill-subtotal" class="helper"></p>
             <div class="paid-section"><label class="sr-only" for="total-paid">Total paid <span>Including tax & tip</span></label><div class="currency-field"><span aria-hidden="true">$</span><input type="number" inputmode="decimal" id="total-paid" step="0.01" min="0" placeholder="0.00"></div></div>
             <button type="button" id="use-receipt-total" class="btn btn-secondary" hidden>Use detected total paid</button>
             <div class="flow-actions"><button type="button" class="btn btn-secondary" data-back>← Back</button><button type="button" class="btn btn-primary" data-next>Next: Results →</button></div>
         </section>
         <section class="flow-step" data-step="4" hidden>
-                <section class="results-section"><div class="section-header"><h1 tabindex="-1">Everyone’s share</h1></div><p class="helper">Tax and tip are included in each share.</p><div id="results-container" aria-live="polite"><p class="placeholder">Add items and enter total to see results</p></div></section>
+                <section class="results-section"><p class="eyebrow">All split. All good.</p><div class="section-header"><h1 tabindex="-1">Everyone’s<br><em>share.</em></h1></div><p class="helper">Tax and tip are included in each share.</p><div id="results-container" aria-live="polite"><p class="placeholder">Add items and enter total to see results</p></div></section>
                 <details class="full-bill-record"><summary>View full bill details</summary><div id="results-details"></div></details>
                 <div class="bill-name-section form-group"><label for="bill-name">Bill name</label><input type="text" id="bill-name" placeholder="Name this bill" autocomplete="off"></div>
                 <button type="button" id="save-bill-btn" class="btn btn-primary save-button">Save bill <span aria-hidden="true">→</span></button>
@@ -106,15 +109,15 @@
             <div class="flow-actions"><button type="button" class="btn btn-secondary" data-back>← Edit total</button><button type="button" class="btn btn-secondary" id="reset-bill">Start over / clear bill</button></div>
         </section>
     </div>
-    <div class="tab-content active" id="saved-bills"><div class="page-heading saved-home-heading"><div><h1>bill calculator</h1><p class="subtitle">your dinners, all in one place.</p></div><div class="home-bill-actions"><button type="button" id="continue-bill" class="btn btn-primary" hidden>continue current bill →</button><button type="button" id="new-bill" class="btn btn-secondary">+ new bill</button></div></div><div class="saved-bills-container"><div id="saved-bills-list"><p class="placeholder">No saved bills yet</p></div></div></div>
+    <div class="tab-content active" id="saved-bills"><div class="page-heading saved-home-heading"><div><p class="eyebrow">Good company. Easy math.</p><h1>Bill<br><em>calculator.</em></h1><p class="subtitle">A little less calculating.<br>A little more time at the table.</p></div><div class="home-bill-actions"><button type="button" id="new-bill" class="btn btn-primary"><span>New bill</span><span aria-hidden="true">+</span></button><button type="button" id="continue-bill" class="btn btn-secondary" hidden>Continue current bill ↗</button></div></div><div class="saved-bills-container"><h2 class="archive-heading">Saved bills</h2><div id="saved-bills-list"><p class="placeholder">No saved bills yet</p></div></div></div>
 </div>
 <dialog id="saved-bill-dialog" aria-labelledby="saved-dialog-title">
     <div class="saved-dialog-header"><h1 id="saved-dialog-title"></h1><button type="button" id="close-saved-dialog" class="btn" aria-label="close saved bill" autofocus>×</button></div>
-    <h2>everyone’s share</h2><p class="helper">tax and tip are included in each share.</p>
-    <button type="button" id="load-saved-bill" class="btn btn-primary">load bill →</button>
+    <h2>Everyone’s share</h2><p class="helper">Tax and tip are included in each share.</p>
     <div id="saved-dialog-summary"></div>
-    <details id="saved-dialog-record" class="full-bill-record"><summary>view full bill details</summary><div id="saved-dialog-details"></div></details>
+    <details id="saved-dialog-record" class="full-bill-record"><summary>View full bill details</summary><div id="saved-dialog-details"></div></details>
+    <button type="button" id="load-saved-bill" class="btn btn-primary">Load bill →</button>
 </dialog>
-<script src="script.js?v=17"></script>
+<script src="script.js?v=18"></script>
 </body>
 </html>
